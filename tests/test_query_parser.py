@@ -23,8 +23,8 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from query_parsing import QueryParser
-from query_parsing.schema import Constraint, ParsedQuery
+from app.query_parsing import QueryParser
+from app.query_parsing.schema import Constraint, ParsedQuery
 
 # ---------------------------------------------------------------------------
 # Paths

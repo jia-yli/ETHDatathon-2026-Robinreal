@@ -10,6 +10,7 @@ from app.participant.ranking import rank_listings
 from app.participant.soft_fact_extraction import extract_soft_facts
 from app.participant.soft_filtering import filter_soft_facts
 from app.participant.process_constraints import process_constraints, filter_hard_facts_via_exec
+from app.query_parsing.parser import QueryParser
 
 def filter_hard_facts(db_path: Path, hard_facts: HardFilters) -> list[dict[str, Any]]:
     return search_listings(db_path, to_hard_filter_params(hard_facts))
@@ -22,16 +23,19 @@ def query_from_text(
     limit: int,
     offset: int,
 ) -> ListingsResponse:
-    # TODO: read constraints from query
-
+    
+    parser = QueryParser()
+    parsed = parser.parse(query)
+    query_constraints = [c.model_dump() for c in parsed.constraints]
     query_hard_constraints, query_soft_constraints = process_constraints(query_constraints, query)
 
     hard_facts = extract_hard_facts(query)
-    hard_facts.limit = limit
-    hard_facts.offset = offset
+    hard_facts.limit = 60000 # limit is applied after filter_hard_facts_via_exec
+    hard_facts.offset = 0 # offset is applied after filter_hard_facts_via_exec
     soft_facts = extract_soft_facts(query)
     candidates = filter_hard_facts(db_path, hard_facts)
     candidates = filter_hard_facts_via_exec(candidates, query_hard_constraints)
+    candidates = [ candidates[i] for i in range(offset, min(offset + limit, len(candidates))) ]
     candidates = filter_soft_facts(candidates, query_soft_constraints)
     return ListingsResponse(
         listings=rank_listings(candidates, query_soft_constraints),

@@ -11,7 +11,8 @@ from app.participant.soft_fact_extraction import extract_soft_facts
 from app.participant.soft_filtering import filter_soft_facts
 from app.harness.bootstrap import bootstrap_database
 from app.harness.search_service import filter_hard_facts
-from app.participant.process_constraints import process_constraints, filter_hard_facts_via_exec, load_jsonl, load_all_constraints
+from app.participant.process_constraints import process_constraints, filter_hard_facts_via_exec
+from app.query_parsing.parser import QueryParser
 
 def build_database(tmp_path: Path) -> Path:
     repo_root = Path(__file__).resolve().parents[1]
@@ -29,42 +30,6 @@ OUTPUT_MD_PATH = RESULT_DIR / "ranked_apartments.md"
 
 if not RESULT_DIR.exists():
     RESULT_DIR.mkdir(parents=True, exist_ok=True)
-
-# def _load_apartment_candidates(path: Path) -> list[dict[str, object]]:
-#     import json
-
-#     raw = json.loads(path.read_text(encoding="utf-8"))
-#     candidates: list[dict[str, object]] = []
-
-#     for item in raw.get("listings", []):
-#         listing = item["listing"]
-#         candidates.append(
-#             {
-#                 "listing_id": item["listing_id"],
-#                 "title": listing.get("title"),
-#                 "description": listing.get("description"),
-#                 "street": listing.get("street"),
-#                 "city": listing.get("city"),
-#                 "postal_code": listing.get("postal_code"),
-#                 "canton": listing.get("canton"),
-#                 "latitude": listing.get("latitude"),
-#                 "longitude": listing.get("longitude"),
-#                 "price": listing.get("price_chf"),
-#                 "rooms": listing.get("rooms"),
-#                 "area": listing.get("living_area_sqm"),
-#                 "available_from": listing.get("available_from"),
-#                 "image_urls": listing.get("image_urls"),
-#                 "hero_image_url": listing.get("hero_image_url"),
-#                 "original_url": listing.get("original_listing_url"),
-#                 "features": listing.get("features"),
-#                 "offer_type": listing.get("offer_type"),
-#                 "object_category": listing.get("object_category"),
-#                 "object_type": listing.get("object_type"),
-#             }
-#         )
-
-#     return candidates
-
 
 def _model_to_dict(model: Any) -> Any:
     if hasattr(model, "model_dump"):
@@ -125,43 +90,28 @@ def _render_markdown(results: list[dict[str, Any]]) -> str:
 def test_with_query_and_soft_constraints() -> None:
     repo_root = Path(__file__).resolve().parents[1]
 
-    test_data_path = repo_root / "tests" / "output" / "query_parser_results.jsonl"
+    query = "Ich suche etwas Kleineres in Lausanne, möglichst in der Nähe von EPFL, gern möbliert, unter 2100 CHF, mit guter Anbindung, und am besten in einer Ecke, die sich sicher, entspannt und nicht komplett anonym anfühlt."
 
-    # Load all test data (queries and their parsed results)
-    test_data = load_jsonl(test_data_path)
-    assert len(test_data) > 0, "Test data should not be empty"
-
-    # Load all constraints grouped by query
-    all_constraints = load_all_constraints(test_data_path)
-
-    # Extract original queries
-    queries = [record.get("query", "") for record in test_data]
-
-    # Process constraints for the first query only
-    query_index = 34
-    query = queries[query_index]
-    query_constraints = all_constraints[query_index]
+    parser = QueryParser()
+    parsed = parser.parse(query)
+    query_constraints = [c.model_dump() for c in parsed.constraints]
     query_hard_constraints, query_soft_constraints = process_constraints(query_constraints, query)
 
-    print(f"\n=== LOADED DATA ===")
-    print(f"Total queries: {len(test_data)}")
-    print(f"Hard constraints for query 1: {len(query_hard_constraints['constraint_list'])}")
-    print(f"Soft constraints for query 1: {len(query_soft_constraints['constraint_list'])}")
-
-    print(f"\n=== TESTING WITH QUERY {query_index + 1} ===")
+    print(f"\n=== PARSED QUERY ===")
     print(f"Query: {query}")
     print(f"Hard constraints: {len(query_hard_constraints['constraint_list'])}")
     print(f"Soft constraints: {len(query_soft_constraints['constraint_list'])}")
 
-    limit = 3000
+    limit = 25
     offset = 0
 
     hard_facts = extract_hard_facts(query)
-    hard_facts.limit = limit
-    hard_facts.offset = offset
+    hard_facts.limit = 60000 # limit is applied after filter_hard_facts_via_exec
+    hard_facts.offset = 0 # offset is applied after filter_hard_facts_via_exec
 
     candidates = filter_hard_facts(repo_root / "data" / "listings.db", hard_facts)
     candidates = filter_hard_facts_via_exec(candidates, query_hard_constraints)
+    candidates = [ candidates[i] for i in range(offset, min(offset + limit, len(candidates))) ]
     candidates = filter_soft_facts(candidates, query_soft_constraints)
 
     ranked_results = rank_listings(candidates, query_soft_constraints)
