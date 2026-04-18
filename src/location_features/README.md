@@ -166,6 +166,47 @@ Single query is <50 ms after the parquets warm up; batches of 1k listings finish
 
 ---
 
+## How it works (and why `commute` is slow the first time)
+
+Both functions use a **lazy singleton** — expensive setup happens inside the first call, and subsequent calls in the same process reuse what's already in memory.
+
+### `amenities` — negligible init
+
+On the first call, `_con()` opens an in-memory DuckDB, loads the spatial extension, and registers two parquet files as views. Cached via `@lru_cache`. One-time cost ~100 ms. Every subsequent call runs SQL directly against the cached connection.
+
+### `commute` — where the waiting happens
+
+On the first call, `_get_network()` has to:
+
+1. **Start the JVM** (r5py wraps a Java engine). ~3 s cold, not negotiable.
+2. **Load a 2.2 GB routing network** — a graph of every Swiss road and footpath plus the full national transit timetable (~30k stops, ~17M stop-times), indexed for multi-modal shortest-path search.
+
+That network is built from `switzerland-latest.osm.pbf` + the cleaned GTFS:
+
+- **First-ever build** (no cache yet): ~5 min. r5py serialises the result to `~/Library/Caches/r5py/*.dat`.
+- **Subsequent fresh processes**: ~25–30 s to load the cached `.dat` back into the JVM. R5py keys the cache on input-file hash; it only rebuilds if you replace the OSM PBF or rerun `clean_gtfs.py`.
+
+Once the network is in memory, each route query costs ~8 s (the JVM multi-modal path search). That 8 s is not init — it's the routing itself, paid on every call.
+
+### Is init avoidable?
+
+**Mandatory for r5py mode.** You can't route on a graph that isn't loaded.
+
+**Not needed for proxy mode.** If Java/r5py aren't installed, `commute()` silently falls back to Haversine + speed heuristic. Zero init, results are instant, accuracy is coarser. `rank_listings` consumes the same dict either way — only the numbers differ.
+
+### Can I initialise once and reuse it?
+
+**Within one Python process: already happens automatically.** The module-level `_NETWORK` global holds the network for the lifetime of the process. First call costs ~30 s; every subsequent call in the same process is just the ~8 s route time.
+
+**Across separate `uv run python ...` invocations: no.** Each process has its own JVM. Strategies that avoid paying the 30 s repeatedly:
+
+1. **Long-lived process.** Jupyter kernel, FastAPI/uvicorn server, or a Python REPL. Init once, serve thousands of queries. This is how the demo API stays fast.
+2. **Batch pre-compute.** Run `commute()` for every listing × fixed reference-POI once, store the minutes as columns on each listing row. At query time, `rank_listings` does an O(1) dict lookup — no r5py, no JVM.
+
+For the live judging demo: strategy 1 (keep uvicorn warm, never restart). For dataset enrichment ahead of time: strategy 2.
+
+---
+
 ## Quick examples for teammates
 
 ### From the command line
