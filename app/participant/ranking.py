@@ -4,24 +4,41 @@ import json
 from typing import Any
 
 from app.models.schemas import ListingData, RankedListingResult
-
+from app.models.similarity import get_image_similarity_scores, get_similarity_scores
 
 def rank_listings(
     candidates: list[dict[str, Any]],
     soft_facts: dict[str, Any],
 ) -> list[RankedListingResult]:
-    # Intentionally stubbed. Teams can replace this with a scoring or
-    # reranking stage that uses the soft_facts payload.
+    
+    # get similarity scores
+    sim_scores = get_similarity_scores(candidates, soft_facts)
+    
+    # get image similarity scores
+    # image_scores = get_image_similarity_scores(candidates, soft_facts)
+    image_scores = [ 0.0 for _ in candidates ]
+
+    # get overall weighted scores
+    scores = [] 
+    for i in range(len(candidates)):
+        overall_score = 0.7 * sim_scores[i] + 0.3 * image_scores[i]
+        scores.append(overall_score)
+
+    candidate_score_pairs = [ (candidate, score) for candidate, score in sorted(
+        zip(candidates, scores),
+        key=lambda x: x[1],
+        reverse=True,
+    )]
+    
     return [
         RankedListingResult(
             listing_id=str(candidate["listing_id"]),
-            score=1.0,
+            score=score,
             reason="Matched hard filters; soft ranking stub.",
             listing=_to_listing_data(candidate),
         )
-        for candidate in candidates
+        for candidate, score in candidate_score_pairs
     ]
-
 
 def _to_listing_data(candidate: dict[str, Any]) -> ListingData:
     return ListingData(
