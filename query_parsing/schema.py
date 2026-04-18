@@ -2,6 +2,30 @@
 Pydantic schemas for parsed user query output.
 
 Hard constraints map directly to filterable database columns.
+Column names and value types match the dataset exactly (see datasets/raw/raw_data/).
+
+Dataset column reference used for filtering:
+  offer_type          → "RENT" | "SALE"          (structured_data has "SALE", robinreal only "RENT")
+  object_category     → "Wohnung" | "Haus" | "Parkplatz" | "Gewerbeobjekt" | "Gastgewerbe" | "Wohnnebenraeume"
+  number_of_rooms     → float  (e.g. 3.5)
+  price               → float  (total price; for RENT this is monthly gross)
+  rent_net            → float  (net monthly rent)
+  rent_gross          → float  (gross monthly rent)
+  area                → float  (m²)
+  object_city         → str    (city name as stored)
+  object_zip          → str    (postal code string)
+  object_state        → str    (canton 2-letter code, upper or lower depending on source)
+  prop_balcony        → "true"/"false"
+  prop_elevator       → "true"/"false"
+  prop_parking        → "true"/"false"
+  prop_garage         → "true"/"false"
+  prop_fireplace      → "true"/"false"
+  prop_child_friendly → "true"/"false"
+  animal_allowed      → "true"/"false"
+  is_new_building     → "true"/"false"
+  available_from      → ISO date string "YYYY-MM-DD"
+  floor               → int
+
 Soft constraints are vague/subjective and passed downstream for semantic/embedding-based matching.
 """
 
@@ -13,33 +37,38 @@ from pydantic import BaseModel, Field
 
 
 class HardConstraints(BaseModel):
-    """Constraints that can be directly applied as structured filters on listing columns."""
+    """
+    Constraints that map directly to dataset column filters.
+    Field names match dataset columns exactly where possible.
+    """
 
-    # Transaction type
-    offer_type: Optional[Literal["RENT", "BUY"]] = None
+    # --- maps to column: offer_type ---
+    offer_type: Optional[Literal["RENT", "SALE"]] = None
 
-    # Property category (German labels matching the dataset's object_category column)
-    object_category: Optional[Literal["Wohnung", "Haus", "Parkplatz", "Gewerbeobjekt"]] = None
+    # --- maps to column: object_category ---
+    object_category: Optional[
+        Literal["Wohnung", "Haus", "Parkplatz", "Gewerbeobjekt", "Gastgewerbe", "Wohnnebenraeume"]
+    ] = None
 
-    # Room count (Swiss notation: 3.5-room = 3 rooms + kitchen/bath counted as 0.5)
+    # --- maps to column: number_of_rooms (range filter) ---
     min_rooms: Optional[float] = None
     max_rooms: Optional[float] = None
-    exact_rooms: Optional[float] = None  # set when user names a specific count
+    exact_rooms: Optional[float] = None  # when user names an exact count
 
-    # Price in CHF (monthly for RENT, total for BUY)
+    # --- maps to column: price / rent_gross (monthly CHF for RENT, total for SALE) ---
     min_price_chf: Optional[float] = None
     max_price_chf: Optional[float] = None
 
-    # Floor area in m²
+    # --- maps to column: area (m²) ---
     min_area_sqm: Optional[float] = None
     max_area_sqm: Optional[float] = None
 
-    # Location
-    city: Optional[str] = None
-    zip_code: Optional[str] = None
-    canton: Optional[str] = None  # e.g. "Zurich", "ZH", "Aargau", "AG"
+    # --- maps to columns: object_city, object_zip, object_state ---
+    object_city: Optional[str] = None   # preserve original spelling
+    object_zip: Optional[str] = None    # postal code string
+    object_state: Optional[str] = None  # 2-letter canton code, e.g. "ZH", "BE", "AG"
 
-    # Amenities (True = required, False = explicitly unwanted, None = no preference)
+    # --- maps to boolean columns (dataset stores "true"/"false" strings) ---
     prop_balcony: Optional[bool] = None
     prop_elevator: Optional[bool] = None
     prop_parking: Optional[bool] = None
@@ -48,13 +77,13 @@ class HardConstraints(BaseModel):
     prop_child_friendly: Optional[bool] = None
     animal_allowed: Optional[bool] = None
 
-    # Building flags
+    # --- maps to column: is_new_building ---
     is_new_building: Optional[bool] = None
 
-    # Availability date (ISO 8601, e.g. "2026-09-01")
+    # --- maps to column: available_from (ISO 8601) ---
     available_from: Optional[str] = None
 
-    # Floor number range (0 = ground floor)
+    # --- maps to column: floor ---
     floor_min: Optional[int] = None
     floor_max: Optional[int] = None
 
