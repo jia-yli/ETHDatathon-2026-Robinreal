@@ -10,7 +10,7 @@ def get_similarity_scores(
 ) -> list[float]:
 
     scores = []
-    soft_facts_str = soft_facts.get("raw_description", "")
+    soft_facts_str = soft_facts.get("original_query", "")
     soft_facts_embed = get_text_embedding(soft_facts_str)
 
     candidate_texts = [ candidate.get("description", "") for candidate in candidates ]
@@ -28,7 +28,7 @@ def get_image_similarity_scores(
 ) -> list[float]:
 
     scores = []
-    soft_facts_str = soft_facts.get("raw_description", "")
+    soft_facts_str = soft_facts.get("original_query", "")
     soft_facts_embed = get_text_embedding(soft_facts_str)
     for candidate in candidates:
         image_urls = candidate.get("image_urls", [])

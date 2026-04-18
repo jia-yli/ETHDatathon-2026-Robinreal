@@ -5,6 +5,7 @@ from typing import Any
 
 from app.models.schemas import ListingData, RankedListingResult
 from app.models.similarity import get_image_similarity_scores, get_similarity_scores
+from app.models.soft_filter_score import get_soft_filter_scores
 
 def rank_listings(
     candidates: list[dict[str, Any]],
@@ -14,6 +15,9 @@ def rank_listings(
     # get similarity scores
     sim_scores = get_similarity_scores(candidates, soft_facts)
     
+    # get soft filter scores
+    soft_filter_scores = get_soft_filter_scores(candidates, soft_facts)
+
     # get image similarity scores
     # image_scores = get_image_similarity_scores(candidates, soft_facts)
     image_scores = [ 0.0 for _ in candidates ]
@@ -21,7 +25,7 @@ def rank_listings(
     # get overall weighted scores
     scores = [] 
     for i in range(len(candidates)):
-        overall_score = 0.7 * sim_scores[i] + 0.3 * image_scores[i]
+        overall_score = 0.6 * sim_scores[i] + 0.2 * image_scores[i] + 0.2 * soft_filter_scores[i]
         scores.append(overall_score)
 
     candidate_score_pairs = [ (candidate, score) for candidate, score in sorted(

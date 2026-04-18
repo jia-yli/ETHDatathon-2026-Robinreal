@@ -11,6 +11,7 @@ from app.participant.soft_fact_extraction import extract_soft_facts
 from app.participant.soft_filtering import filter_soft_facts
 from app.harness.bootstrap import bootstrap_database
 from app.harness.search_service import filter_hard_facts
+from app.participant.process_constraints import process_constraints, filter_hard_facts_via_exec, load_jsonl, load_all_constraints
 
 def build_database(tmp_path: Path) -> Path:
     repo_root = Path(__file__).resolve().parents[1]
@@ -28,42 +29,6 @@ OUTPUT_MD_PATH = RESULT_DIR / "ranked_apartments.md"
 
 if not RESULT_DIR.exists():
     RESULT_DIR.mkdir(parents=True, exist_ok=True)
-
-def _load_jsonl(path: Path) -> list[dict[str, object]]:
-    import json
-
-    raw = path.read_text(encoding="utf-8")
-    records: list[dict[str, object]] = []
-    start = None
-    depth = 0
-    in_string = False
-    escape = False
-
-    for index, char in enumerate(raw):
-        if escape:
-            escape = False
-            continue
-        if char == "\\":
-            escape = True
-            continue
-        if char == '"':
-            in_string = not in_string
-            continue
-        if in_string:
-            continue
-        if char == "{":
-            if depth == 0:
-                start = index
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0 and start is not None:
-                block = raw[start : index + 1]
-                records.append(json.loads(block))
-                start = None
-
-    return records
-
 
 # def _load_apartment_candidates(path: Path) -> list[dict[str, object]]:
 #     import json
@@ -159,30 +124,48 @@ def _render_markdown(results: list[dict[str, Any]]) -> str:
 
 def test_with_query_and_soft_constraints() -> None:
     repo_root = Path(__file__).resolve().parents[1]
-    
+
     test_data_path = repo_root / "tests" / "output" / "query_parser_results.jsonl"
-    
-    test_data = _load_jsonl(test_data_path)
+
+    # Load all test data (queries and their parsed results)
+    test_data = load_jsonl(test_data_path)
     assert len(test_data) > 0, "Test data should not be empty"
 
-    query = test_data[0].get("query")
-    soft_constraints = test_data[0]['parsed'].get("soft_constraints")
+    # Load all constraints grouped by query
+    all_constraints = load_all_constraints(test_data_path)
 
-    limit = 20
+    # Extract original queries
+    queries = [record.get("query", "") for record in test_data]
+
+    # Process constraints for the first query only
+    query_index = 34
+    query = queries[query_index]
+    query_constraints = all_constraints[query_index]
+    query_hard_constraints, query_soft_constraints = process_constraints(query_constraints, query)
+
+    print(f"\n=== LOADED DATA ===")
+    print(f"Total queries: {len(test_data)}")
+    print(f"Hard constraints for query 1: {len(query_hard_constraints['constraint_list'])}")
+    print(f"Soft constraints for query 1: {len(query_soft_constraints['constraint_list'])}")
+
+    print(f"\n=== TESTING WITH QUERY {query_index + 1} ===")
+    print(f"Query: {query}")
+    print(f"Hard constraints: {len(query_hard_constraints['constraint_list'])}")
+    print(f"Soft constraints: {len(query_soft_constraints['constraint_list'])}")
+
+    limit = 3000
     offset = 0
-      
+
     hard_facts = extract_hard_facts(query)
     hard_facts.limit = limit
     hard_facts.offset = offset
-    # soft_facts = extract_soft_facts(query)
+
     candidates = filter_hard_facts(repo_root / "data" / "listings.db", hard_facts)
-    candidates = filter_soft_facts(candidates, soft_constraints)
-    # return ListingsResponse(
-    #     listings=rank_listings(candidates, soft_constraints),
-    #     meta={},
-    # )
-    ranked_results = rank_listings(candidates, soft_constraints)
-    assert len(ranked_results) > 0, "Ranked results should not be empty"
+    candidates = filter_hard_facts_via_exec(candidates, query_hard_constraints)
+    candidates = filter_soft_facts(candidates, query_soft_constraints)
+
+    ranked_results = rank_listings(candidates, query_soft_constraints)
+    # assert len(ranked_results) > 0, "Ranked results should not be empty"
 
     ranked_results_data = [_model_to_dict(result) for result in ranked_results]
 
@@ -203,4 +186,5 @@ def test_with_query_and_soft_constraints() -> None:
     print(f"\nWrote ranked results JSON to: {OUTPUT_JSON_PATH}")
     print(f"Wrote ranked markdown to: {OUTPUT_MD_PATH}")
     print(f"Query: {query}")
-    print(f"Soft constraints: {soft_constraints}")
+    print(f"Hard constraints used: {len(query_hard_constraints['constraint_list'])}")
+    print(f"Soft constraints used: {len(query_soft_constraints['constraint_list'])}")

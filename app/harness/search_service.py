@@ -9,7 +9,7 @@ from app.participant.hard_fact_extraction import extract_hard_facts
 from app.participant.ranking import rank_listings
 from app.participant.soft_fact_extraction import extract_soft_facts
 from app.participant.soft_filtering import filter_soft_facts
-
+from app.participant.process_constraints import process_constraints, filter_hard_facts_via_exec
 
 def filter_hard_facts(db_path: Path, hard_facts: HardFilters) -> list[dict[str, Any]]:
     return search_listings(db_path, to_hard_filter_params(hard_facts))
@@ -22,14 +22,19 @@ def query_from_text(
     limit: int,
     offset: int,
 ) -> ListingsResponse:
+    # TODO: read constraints from query
+
+    query_hard_constraints, query_soft_constraints = process_constraints(query_constraints, query)
+
     hard_facts = extract_hard_facts(query)
     hard_facts.limit = limit
     hard_facts.offset = offset
     soft_facts = extract_soft_facts(query)
     candidates = filter_hard_facts(db_path, hard_facts)
-    candidates = filter_soft_facts(candidates, soft_facts)
+    candidates = filter_hard_facts_via_exec(candidates, query_hard_constraints)
+    candidates = filter_soft_facts(candidates, query_soft_constraints)
     return ListingsResponse(
-        listings=rank_listings(candidates, soft_facts),
+        listings=rank_listings(candidates, query_soft_constraints),
         meta={},
     )
 
