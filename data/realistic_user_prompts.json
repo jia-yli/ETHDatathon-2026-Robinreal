@@ -1,0 +1,434 @@
+{
+  "meta": {
+    "description": "Realistic, naturalistic user prompts mimicking how people actually search for rentals in Switzerland — Comparis/ImmoScout search box inputs, chat-style requests, voice queries, expat help-seeking. No engineered edge cases here; the goal is plausible distributional coverage of real user behaviour. Use alongside test_queries.json (which targets specific failure modes).",
+    "total": 60,
+    "design_notes": [
+      "Each prompt has a `persona` (life situation that motivates the search) and a `channel` (where this kind of phrasing is realistic — search-bar, chat, voice, email, forum).",
+      "Prompts are NOT engineered to break the system. They're written to feel like things a Swiss renter would actually type.",
+      "Languages reflect Swiss realities: ~60% DE (incl. some Swiss German), ~20% FR, ~5% IT, ~15% EN (expats).",
+      "Many prompts are deliberately incomplete — real users iterate."
+    ]
+  },
+  "prompts": [
+    {
+      "id": "real_001",
+      "persona": "Young professional, first apartment after moving out of WG",
+      "channel": "search-bar",
+      "language": "de",
+      "text": "2.5 Zimmer Zürich max 2200"
+    },
+    {
+      "id": "real_002",
+      "persona": "Couple expecting first child, needs more space",
+      "channel": "chat",
+      "language": "de",
+      "text": "Wir erwarten unser erstes Kind und brauchen eine grössere Wohnung. 4 Zimmer in Winterthur oder Umgebung, Balkon wäre super, bis ca. 2800 CHF. Ruhige Lage wichtig."
+    },
+    {
+      "id": "real_003",
+      "persona": "Expat starting at Google Zurich",
+      "channel": "email",
+      "language": "en",
+      "text": "Hi, I'm relocating to Zurich for a new job at Google in August. Looking for a furnished 1 or 2 bedroom apartment, ideally near the office in Europaallee or with easy tram connection. Budget around CHF 3000 all-in. Contract initially for 1 year. Thanks!"
+    },
+    {
+      "id": "real_004",
+      "persona": "Student starting Master's at EPFL",
+      "channel": "forum",
+      "language": "fr",
+      "text": "Salut tout le monde, je commence mon master à l'EPFL en septembre, je cherche un studio ou 1.5 pièces sur Lausanne, max 1300, idéalement proche du m1. Quelqu'un connaît des bons plans?"
+    },
+    {
+      "id": "real_005",
+      "persona": "Freelance designer, prefers character over modern",
+      "channel": "search-bar",
+      "language": "de",
+      "text": "Altbauwohnung 3.5 Zimmer Basel mit Stuck und hohen Decken"
+    },
+    {
+      "id": "real_006",
+      "persona": "Retired couple downsizing",
+      "channel": "chat",
+      "language": "de",
+      "text": "Wir sind ein Ehepaar im Ruhestand und möchten von unserem Haus in eine kleinere Wohnung in der Stadt Bern ziehen. 3 oder 3.5 Zimmer, unbedingt mit Lift, gerne in der Nähe vom Tram, idealerweise Erdgeschoss mit kleinem Garten oder ein höheres Stockwerk mit gutem Lift. Bis 2500 CHF kalt."
+    },
+    {
+      "id": "real_007",
+      "persona": "Family with two kids and a dog",
+      "channel": "search-bar",
+      "language": "de",
+      "text": "4.5 zimmer wohnung mit garten hund erlaubt zürich umgebung"
+    },
+    {
+      "id": "real_008",
+      "persona": "Italian-speaking professional moving to Ticino",
+      "channel": "chat",
+      "language": "it",
+      "text": "Mi trasferisco a Lugano per lavoro a settembre. Cerco un 2.5 locali, possibilmente con vista, vicino alla stazione FFS, fino a 2200 CHF al mese."
+    },
+    {
+      "id": "real_009",
+      "persona": "Young woman concerned about safety",
+      "channel": "search-bar",
+      "language": "en",
+      "text": "1.5 room apartment Zurich safe area not too far from city max 1800"
+    },
+    {
+      "id": "real_010",
+      "persona": "Couple looking for weekend ski apartment",
+      "channel": "chat",
+      "language": "de",
+      "text": "Suchen Wochenend-/Ferienwohnung in Verbier, Davos oder Engadin. 2-3 Zimmer, möbliert, mit Balkon und idealerweise Bergsicht. Budget pro Monat bis 2500."
+    },
+    {
+      "id": "real_011",
+      "persona": "Tech worker, very specific commute requirement",
+      "channel": "chat",
+      "language": "en",
+      "text": "I work at the Roche tower in Basel and need to be within 25 minutes door-to-door by tram or bike. 2 rooms minimum, modern building, washer/dryer in unit non-negotiable. Budget CHF 2400."
+    },
+    {
+      "id": "real_012",
+      "persona": "Person with mobility limitations",
+      "channel": "email",
+      "language": "de",
+      "text": "Guten Tag, ich suche eine rollstuhlgängige Wohnung in der Region Bern. Erdgeschoss oder Lift mit breitem Eingang, schwellenlose Dusche. 2 oder 2.5 Zimmer reichen. Bis ca. 1900 CHF. Mit IV-Zuschuss möglich."
+    },
+    {
+      "id": "real_013",
+      "persona": "PhD student looking for cheap room in WG",
+      "channel": "forum",
+      "language": "de",
+      "text": "Hey, suche WG-Zimmer in Zürich (am liebsten Kreis 3, 4, 5 oder 6), max 850 inkl., ab August. Bin Doktorand an der ETH, ruhig, sauber, koche gerne. Veggie-WG bevorzugt :)"
+    },
+    {
+      "id": "real_014",
+      "persona": "Family relocating from Geneva to Zurich",
+      "channel": "chat",
+      "language": "fr",
+      "text": "Nous déménageons de Genève à Zurich pour le travail de mon mari. Famille avec 2 enfants en âge scolaire (8 et 11 ans). Cherchons 4-5 pièces, école française à proximité (Collège Champittet ou EFZ), budget jusqu'à 4500 CHF, à partir de juillet."
+    },
+    {
+      "id": "real_015",
+      "persona": "Single dad, alternating custody",
+      "channel": "search-bar",
+      "language": "de",
+      "text": "3 zimmer wohnung in der nähe schule meilen küsnacht erlenbach max 2800"
+    },
+    {
+      "id": "real_016",
+      "persona": "First-time renter, very vague",
+      "channel": "search-bar",
+      "language": "de",
+      "text": "günstige wohnung"
+    },
+    {
+      "id": "real_017",
+      "persona": "Couple, one works in Zurich, one in Basel",
+      "channel": "chat",
+      "language": "de",
+      "text": "Wir suchen eine Wohnung irgendwo zwischen Zürich und Basel mit guter Bahnverbindung in beide Städte. Aarau, Brugg, Olten oder so. 3.5 Zimmer, ca. 2200 CHF, neuer Bau wäre top."
+    },
+    {
+      "id": "real_018",
+      "persona": "Recently divorced, fresh start",
+      "channel": "chat",
+      "language": "de",
+      "text": "Brauche eine neue Wohnung nach Trennung. 2.5 Zimmer in Luzern oder Zug, möglichst hell und freundlich, gerne mit Balkon und Aussicht. Bis 2000 CHF."
+    },
+    {
+      "id": "real_019",
+      "persona": "Musician, needs sound-tolerant building",
+      "channel": "forum",
+      "language": "en",
+      "text": "Hey Zurich, I'm a violinist looking for a 2-room apartment where I can practice without driving neighbours crazy. Old building with thick walls preferred, or newer build with good soundproofing. Up to CHF 2300. Open to all neighbourhoods."
+    },
+    {
+      "id": "real_020",
+      "persona": "Crypto entrepreneur",
+      "channel": "search-bar",
+      "language": "en",
+      "text": "luxury apartment zug 4 rooms lake view"
+    },
+    {
+      "id": "real_021",
+      "persona": "Postdoc on temporary contract",
+      "channel": "email",
+      "language": "en",
+      "text": "Hello, I'm starting a 2-year postdoc at the University of Bern in October. Looking for a furnished 2-room apartment, max CHF 1700, walking or short tram distance to Länggasse. Lease should ideally allow for shorter than 3 years."
+    },
+    {
+      "id": "real_022",
+      "persona": "Parent looking for housing near specific school",
+      "channel": "chat",
+      "language": "de",
+      "text": "Suche 4 Zimmer Wohnung im Einzugsgebiet Schule Hirzenbach in Zürich Schwamendingen. Bis 2700 CHF. Kinder sind schulpflichtig, Umzug muss vor Schulanfang im August klappen."
+    },
+    {
+      "id": "real_023",
+      "persona": "Young couple, very minimal info",
+      "channel": "search-bar",
+      "language": "de",
+      "text": "schöne 3 zimmer wohnung zürich"
+    },
+    {
+      "id": "real_024",
+      "persona": "Person seeking quiet for work-from-home",
+      "channel": "chat",
+      "language": "de",
+      "text": "Ich arbeite zu 100% im Homeoffice und brauche eine ruhige Wohnung mit separatem Arbeitszimmer. 3 Zimmer in Bern oder Umgebung, gutes Internet wäre wichtig (Glasfaser idealerweise). Bis 2400 CHF."
+    },
+    {
+      "id": "real_025",
+      "persona": "Returning Swiss expat",
+      "channel": "email",
+      "language": "de",
+      "text": "Nach 6 Jahren in Singapur ziehen wir mit der Familie zurück in die Schweiz. Mein Mann fängt bei Novartis an, also Region Basel. 4.5 Zimmer, Garten oder grosse Terrasse, internationale Schule erreichbar (ISB), bis 5500 CHF Miete. Ab Juli."
+    },
+    {
+      "id": "real_026",
+      "persona": "Casual Tinder-style description",
+      "channel": "chat",
+      "language": "de",
+      "text": "suche eine wohnung mit der ich glücklich werde 😅 lieber älter als modern, hell, ruhig, in der nähe vom see, 2.5 oder 3 zimmer, zürich, bis 2500"
+    },
+    {
+      "id": "real_027",
+      "persona": "Person who already knows what they want",
+      "channel": "search-bar",
+      "language": "fr",
+      "text": "appartement 4 pièces lausanne ouchy balcon vue lac"
+    },
+    {
+      "id": "real_028",
+      "persona": "Pet owner concerned about pet rules",
+      "channel": "chat",
+      "language": "de",
+      "text": "Wir haben zwei Katzen und einen kleinen Hund. Suchen 3.5 Zimmer Wohnung in der Region Aargau, max 2300 CHF, Tiere müssen erlaubt sein. Garten oder grosser Balkon ein Muss."
+    },
+    {
+      "id": "real_029",
+      "persona": "Older gentleman, formal style",
+      "channel": "email",
+      "language": "de",
+      "text": "Sehr geehrte Damen und Herren, hiermit erlaube ich mir, eine Wohnung im Raum Thun zu suchen. 3 bis 3.5 Zimmer, mit Sicht auf die Alpen wäre wunderbar. Bis CHF 2200 monatlich. Bevorzugter Bezugstermin: 1. September 2026."
+    },
+    {
+      "id": "real_030",
+      "persona": "Bilingual person mid-search",
+      "channel": "chat",
+      "language": "mixed",
+      "text": "Ok ich brauche eine Wohnung in Biel/Bienne, peu importe quartier mais avec parking, 3 Zimmer, max 1800."
+    },
+    {
+      "id": "real_031",
+      "persona": "Person fed up with current flat, venting",
+      "channel": "chat",
+      "language": "de",
+      "text": "Will einfach raus aus dieser dunklen Bude. Brauche ENDLICH was Helles, mit Balkon, am liebsten Südseite, 3 Zimmer, Zürich, bis 2600. Ab sofort wenn möglich."
+    },
+    {
+      "id": "real_032",
+      "persona": "International couple, both in academia",
+      "channel": "email",
+      "language": "en",
+      "text": "Hi! My partner and I are both starting positions at ETH (postdoc and lecturer). Looking for a 3-room apartment in Zurich, ideally Wipkingen, Höngg, or Oerlikon for easy commute to Hönggerberg. Furnished or unfurnished both fine. Budget CHF 2400-2800. Move-in early October."
+    },
+    {
+      "id": "real_033",
+      "persona": "Single mother on tight budget",
+      "channel": "forum",
+      "language": "de",
+      "text": "Alleinerziehend mit 2 Kindern (5 und 8). Brauche dringend 3 oder 3.5 Zimmer in der Region Solothurn / Olten / Aarau. Max 1700 CHF. Stadt oder Agglomeration egal, Hauptsache Schule und Kita in der Nähe. Tipps?"
+    },
+    {
+      "id": "real_034",
+      "persona": "Influencer wanting Insta-friendly apartment",
+      "channel": "chat",
+      "language": "en",
+      "text": "Looking for an aesthetic apartment in Zurich — bright, lots of natural light, white walls or pretty herringbone floors, big windows. 2-3 rooms, up to CHF 3000. Vibe matters more than size!"
+    },
+    {
+      "id": "real_035",
+      "persona": "Cyclist/outdoorsy",
+      "channel": "search-bar",
+      "language": "de",
+      "text": "wohnung bern mit veloraum nahe aare 3 zimmer"
+    },
+    {
+      "id": "real_036",
+      "persona": "User uses Swiss German colloquial",
+      "channel": "chat",
+      "language": "de-ch",
+      "text": "Söich e schöni 3-Zimmer-Wohnig z Züri Cheib 4 oder 5, mit Balkon, bis 2400 Stutz, am liebste mit Parkett."
+    },
+    {
+      "id": "real_037",
+      "persona": "Person who only knows what they don't want",
+      "channel": "chat",
+      "language": "de",
+      "text": "Brauche etwas in Basel. KEIN Hochhaus, KEIN Erdgeschoss, KEIN Lärm von der Strasse, KEIN 70er-Jahre-Bau. 3 Zimmer reichen, Budget bis 2300."
+    },
+    {
+      "id": "real_038",
+      "persona": "Romantic partner-search style",
+      "channel": "chat",
+      "language": "de",
+      "text": "Liebe Wohnung, wo bist du? 2.5 Zimmer, Zürich, hell, mit kleinem Balkon, gerne in einem schönen Altbau, bis 2400 CHF. Wir würden so gut zusammenpassen ❤️"
+    },
+    {
+      "id": "real_039",
+      "persona": "Ukrainian refugee family",
+      "channel": "email",
+      "language": "en",
+      "text": "Hello, our family of 4 (with status S) is looking for a 3 or 4 room apartment in canton Aargau or Solothurn, up to CHF 1800. We need somewhere stable for the children's school. Pets (one cat) please. Available from now."
+    },
+    {
+      "id": "real_040",
+      "persona": "Person looking for shared ownership / commune",
+      "channel": "forum",
+      "language": "de",
+      "text": "Suche Anschluss an Gemeinschaftswohnprojekt oder grosse WG in Bern oder Zürich. 1 Zimmer + Mitnutzung. Bis 1100 CHF. Werte: Nachhaltigkeit, Konsens, vegan-freundlich."
+    },
+    {
+      "id": "real_041",
+      "persona": "Business traveler needing serviced apartment",
+      "channel": "chat",
+      "language": "en",
+      "text": "Need a serviced apartment in Zurich for 4 months, weekly cleaning included, fast wifi, near the airport ideally. 1 bedroom or studio. Budget up to CHF 4500/month all in."
+    },
+    {
+      "id": "real_042",
+      "persona": "Couple downsizing after kids leave home",
+      "channel": "chat",
+      "language": "de",
+      "text": "Unsere Kinder sind ausgezogen und das Haus ist zu gross. Suchen 3 Zimmer Wohnung in St. Gallen oder Umgebung, gerne mit Lift und Balkon, ruhige Quartierlage, bis 2200 CHF. Bezug flexibel."
+    },
+    {
+      "id": "real_043",
+      "persona": "Person who really values a kitchen",
+      "channel": "search-bar",
+      "language": "de",
+      "text": "wohnung mit grosser offener küche induktion luzern 3.5 zimmer"
+    },
+    {
+      "id": "real_044",
+      "persona": "Practical couple, transit-oriented",
+      "channel": "chat",
+      "language": "fr",
+      "text": "On cherche un 3 pièces à Genève, proche tram 12 ou 14 idéalement, 5 min à pied max d'un arrêt. Pas trop loin de la gare aussi. Budget 2500."
+    },
+    {
+      "id": "real_045",
+      "persona": "Person worried about heat in summer",
+      "channel": "chat",
+      "language": "de",
+      "text": "Suche 2 oder 2.5 Zimmer in Zürich, MUSS Nordseite oder kühl sein im Sommer. Letztes Jahr fast verbrutzelt im Dachgeschoss. Kein Dachgeschoss bitte. Bis 2100."
+    },
+    {
+      "id": "real_046",
+      "persona": "Person with very specific aesthetic taste",
+      "channel": "chat",
+      "language": "en",
+      "text": "Looking for Mid-century modern or Bauhaus-style apartment in Zurich. 2 rooms, original parquet, big windows, simple lines. Sterile new builds not for me. Up to CHF 2500."
+    },
+    {
+      "id": "real_047",
+      "persona": "Person without strong preferences",
+      "channel": "chat",
+      "language": "de",
+      "text": "Hauptsache Dach über dem Kopf in der Region Bern. 2-3 Zimmer, möglichst günstig."
+    },
+    {
+      "id": "real_048",
+      "persona": "Person looking for first own apartment in 30s",
+      "channel": "chat",
+      "language": "de",
+      "text": "Bin 33 und ziehe nach 14 Jahren WG endlich allein. 2 oder 2.5 Zimmer in Zürich, am liebsten Kreis 3 oder 4, bis 1900 CHF. Lieber klein und schön als gross und hässlich."
+    },
+    {
+      "id": "real_049",
+      "persona": "Family looking near specific Kindergarten",
+      "channel": "chat",
+      "language": "de",
+      "text": "Suchen 4 Zimmer Wohnung in der Nähe vom Kindergarten Wiesenstrasse in Uster. Bis 2800 CHF. Eltern beide berufstätig, Kita-Plätze sind ein Plus."
+    },
+    {
+      "id": "real_050",
+      "persona": "Person fed up looking, sarcastic",
+      "channel": "chat",
+      "language": "de",
+      "text": "Suche das Unmögliche: 3.5 Zimmer in Zürich Stadt, hell, ruhig, mit Balkon, unter 2500 CHF. Falls jemand Zauberei beherrscht bitte melden."
+    },
+    {
+      "id": "real_051",
+      "persona": "Voice-to-text input",
+      "channel": "voice",
+      "language": "de",
+      "text": "äh ja ich suche eine wohnung also so drei zimmer in winterthur oder thalwil oder so für äh maximal 2400 mit balkon wäre schön und parkplatz wenn möglich"
+    },
+    {
+      "id": "real_052",
+      "persona": "Voice-to-text input English",
+      "channel": "voice",
+      "language": "en",
+      "text": "okay so I'm looking for an apartment um in Zurich about three rooms maybe two and a half I think the budget is around twenty five hundred francs and yeah ideally with a balcony"
+    },
+    {
+      "id": "real_053",
+      "persona": "User asks question instead of stating",
+      "channel": "chat",
+      "language": "de",
+      "text": "Was gibt es in Bern für ca 2500 mit 3 Zimmern und Balkon?"
+    },
+    {
+      "id": "real_054",
+      "persona": "User describes ideal day",
+      "channel": "chat",
+      "language": "en",
+      "text": "I want to be able to walk to a coffee shop in the morning, jog along water in the evening, and have friends over for dinner without worrying about the neighbours. 2-3 rooms, Zurich or Lucerne, up to CHF 2700."
+    },
+    {
+      "id": "real_055",
+      "persona": "User specifies exact street",
+      "channel": "search-bar",
+      "language": "de",
+      "text": "wohnung bachstrasse zürich oder seefeld"
+    },
+    {
+      "id": "real_056",
+      "persona": "Family with elderly parent moving in",
+      "channel": "chat",
+      "language": "de",
+      "text": "Wir brauchen eine grössere Wohnung, da meine Mutter (78) zu uns zieht. 5 Zimmer, idealerweise mit Einliegerwohnung oder zumindest separatem Zimmer mit eigenem Bad. Region Aargau oder Zürich Land. Bis 3800 CHF."
+    },
+    {
+      "id": "real_057",
+      "persona": "Person looking for last-minute place",
+      "channel": "chat",
+      "language": "de",
+      "text": "DRINGEND: Brauche per 1. Mai eine Wohnung in Zürich, 2 Zimmer reichen, bis 2000. Bin nicht wählerisch, Hauptsache verfügbar!"
+    },
+    {
+      "id": "real_058",
+      "persona": "Engineer who quantifies everything",
+      "channel": "chat",
+      "language": "en",
+      "text": "Filters: city ∈ {Zurich, Winterthur}; rooms ≥ 3; price ≤ 2600; floor ≥ 2; year_built ≥ 2000; orientation: south or southwest; commute_time(office=Hardbrücke) ≤ 30min by ÖV. Sort by descending light score."
+    },
+    {
+      "id": "real_059",
+      "persona": "Skeptical user who's been burned",
+      "channel": "chat",
+      "language": "de",
+      "text": "Brauche eine ehrliche 3 Zimmer Wohnung in Basel — keine geschönten Fotos, keine versteckten Nebenkosten, keine Schimmelprobleme. Bis 2200 CHF. Lieber günstig und ehrlich als teuer und enttäuschend."
+    },
+    {
+      "id": "real_060",
+      "persona": "User trying out the system, abstract test",
+      "channel": "chat",
+      "language": "en",
+      "text": "Show me something interesting under CHF 3000 anywhere in Switzerland. Surprise me."
+    }
+  ]
+}
