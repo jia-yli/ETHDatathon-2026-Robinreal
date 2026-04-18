@@ -1,0 +1,26 @@
+id,query,offer_type,object_category,exact_rooms,min_rooms,max_rooms,min_price_chf,max_price_chf,min_area_sqm,max_area_sqm,object_city,object_zip,object_state,prop_balcony,prop_elevator,prop_parking,prop_garage,prop_fireplace,prop_child_friendly,animal_allowed,is_new_building,available_from,floor_min,floor_max,soft_empty,soft_has
+tc01_apartment_zurich_3r5_balcony,3.5-room bright apartment in Zurich under CHF 2800 with balcony,,Wohnung,3.5,,,,2800.0,,,Zurich,,,True,,,,,,,,,,,False,bright
+tc02_family_flat_winterthur_parking,"Bright family-friendly flat in Winterthur, not too expensive, ideally with parking",,Wohnung,,,,,,,,Winterthur,,,,,,,,True,,,,,,False,bright|not too expensive|expensive|parking
+tc03_soft_heavy_basel,"Modern apartment in Basel, cheap but central, quiet with nice views",,Wohnung,,,,,,,,Basel,,,,,,,,,,,,,,False,modern|cheap|central|quiet|view
+tc04_buy_house_canton_zurich_garage,Looking to buy a 5-room house in canton Zurich with garage,SALE,Haus,5.0,,,,,,,,,ZH,,,,True,,,,,,,,True,
+tc05_rent_studio_geneva_1500,"Studio apartment for rent in Geneva, max CHF 1500 per month",RENT,Wohnung,1.0,,,,1500.0,,,Geneva,,,,,,,,,,,,,,True,
+tc06_bern_4r5_available_sep2026_elevator,"4.5-room apartment in Bern, available from September 2026, with elevator",,Wohnung,4.5,,,,,,,Bern,,,,True,,,,,,,2026-09,,,True,
+tc07_pets_2room_cheap,"2-room flat anywhere in Switzerland, must allow pets, cheap",,Wohnung,2.0,,,,,,,,,,,,,,,,True,,,,,False,cheap
+tc08_luxury_penthouse_zurich_8000,"Luxury penthouse in Zurich city center, budget up to CHF 8000",,Wohnung,,,,,8000.0,,,Zurich,,,,,,,,,,,,,,False,luxury|penthouse|city center|center
+tc09_buy_house_zug_6rooms_garage,"Family house for sale in Zug, at least 6 rooms, with garage, quiet neighborhood",SALE,Haus,,6.0,,,,,,Zug,,,,,,True,,,,,,,,False,quiet
+tc10_2room_zurich_2000_near_hb,"2-room apartment near Zurich main station, max CHF 2000, good public transport access",,Wohnung,2.0,,,,2000.0,,,Zurich,,,,,,,,,,,,,,False,main station|public transport|transport
+tc11_1room_lausanne_1200_furnished,"Cozy 1-room flat in Lausanne, max CHF 1200, furnished if possible",,Wohnung,1.0,,,,1200.0,,,Lausanne,,,,,,,,,,,,,,False,cozy|furnished
+tc12_new_building_winterthur_3_4rooms_price_range,"New building apartment in Winterthur with balcony and parking, 3 to 4 rooms, CHF 2000-3000",,Wohnung,,3.0,4.0,2000.0,3000.0,,,Winterthur,,,True,,True,,,,,True,,,,True,
+tc13_ground_floor_lucerne,"Ground floor apartment in Lucerne, wheelchair accessible, with garden terrace access",,Wohnung,,,,,,,,Lucerne,,,,,,,,,,,,,0,False,wheelchair|garden|terrace
+tc14_buy_house_aargau_150sqm_5rooms,"House to buy in canton Aargau, at least 150 sqm, 5 or more rooms, budget CHF 900000",SALE,Haus,,5.0,,,900000.0,150.0,,,,AG,,,,,,,,,,,,True,
+tc15_2r5_uster_sep2026_pets,"2.5 room flat in Uster, available from September 2026, pets allowed",,Wohnung,2.5,,,,,,,Uster,,,,,,,,,True,,2026-09,,,True,
+tc16_dog_stgallen_1800_2or3rooms,"I need a place for me and my dog in St. Gallen, max CHF 1800 per month, 2 or 3 rooms",,,,2.0,3.0,,1800.0,,,St. Gallen,,,,,,,,,True,,,,,False,
+tc17_rent_aarau_fireplace_quiet,"Quiet place to rent in Aarau, not too big, with fireplace for winter evenings",RENT,,,,,,,,,Aarau,,,,,,,True,,,,,,,False,quiet|not too big|big
+tc18_lugano_views_3500_modern,"Apartment in Lugano with great views, max CHF 3500, modern interior",,Wohnung,,,,,3500.0,,,Lugano,,,,,,,,,,,,,,False,view|modern
+tc19_3room_zurich_balcony_topfloor_2500,"3-room apartment in Zurich, top floor preferred, balcony required, under CHF 2500",,Wohnung,3.0,,,,2500.0,,,Zurich,,,True,,,,,,,,,,,False,top floor|top
+tc20_family_zurich_4rooms_balcony_schools,"Affordable family apartment in Zurich with at least 4 rooms, balcony, close to good schools and public transport",,Wohnung,,4.0,,,,,,Zurich,,,True,,,,,True,,,,,,False,affordable|school|transport
+tc21_hedged_rooms_zurich_2500,"Around 3-room apartment in Zurich, max CHF 2500",,Wohnung,,,,,2500.0,,,Zurich,,,,,,,,,,,,,,False,around 3 rooms|around 3|3 room
+tc22_maybe_rooms_hedged_price_bern,"Looking for a flat in Bern, maybe 2 or 3 rooms, budget around CHF 2000",,Wohnung,,,,,,,,Bern,,,,,,,,,,,,,,False,maybe|around|2000|budget
+tc23_preferred_rooms_and_balcony_winterthur,"Preferably a 4-room apartment in Winterthur, balcony if possible, under CHF 3000",,Wohnung,,,,,3000.0,,,,,,,,,,,,,,,,,False,preferably|4 room|balcony if|balcony|Winterthur
+tc24_roughly_rooms_house_zurich_garage,"House in Zurich, roughly 5 rooms would be nice, must have garage",,Haus,,,,,,,,Zurich,,,,,,True,,,,,,,,False,roughly|5 room|would be nice
+tc25_hedged_city_hedged_parking,"2-room apartment, ideally in Basel or Zurich, under CHF 1600, parking would be handy",,Wohnung,2.0,,,,1600.0,,,,,,,,,,,,,,,,,False,ideally|Basel|parking
