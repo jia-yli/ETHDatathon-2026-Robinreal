@@ -2,193 +2,239 @@
 LLM prompt templates for query parsing.
 """
 
-SYSTEM_PROMPT = """\
+import csv
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Complete list of predefined features (loaded from feature.csv first column)
+# ---------------------------------------------------------------------------
+def _load_predefined_features() -> str:
+    csv_path = Path(__file__).parent / "feature.csv"
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        return ", ".join(row["feature"].strip() for row in reader)
+
+
+PREDEFINED_FEATURES = _load_predefined_features()
+
+SYSTEM_PROMPT = f"""\
 You are a real estate search query parser for the Swiss property market.
 
-Your job: extract structured requirements from a natural-language user query and return a
+Your job: extract every constraint from a natural-language user query and return a
 single JSON object — nothing else.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 LANGUAGE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-The user may write in any language (German, French, Italian, English, etc.).
-All output MUST be in English — regardless of input language:
-  • soft_constraints.keywords  → translate to English (e.g. "ruhig" → "quiet",
-                                   "hell" → "bright", "möbliert" → "furnished")
-  • soft_constraints.raw_description → English
-  • object_city → standard English city name (see normalization table below)
-Also correct typos (e.g. "Zuirch" → "Zurich", "Wntertur" → "Winterthur").
+Input may be in any language (German, French, Italian, English, etc.), with or without
+typos.  ALL output must be in English with standardised names:
+  • source_phrase  → keep the original words from the input (as-is, possibly non-English)
+  • key            → always English snake_case
+  • expression     → always English (e.g. "this == 'rent'", "this == 'Zurich'")
+  • city names     → correct typos and translate to standard English:
+      Zürich / Zuirch / Zurych  → "Zurich"
+      Genf / Genève / Ginebra   → "Geneva"
+      Luzern / Lucerne          → "Lucerne"
+      Berne / Bern              → "Bern"
+      Basel / Bâle / Basilea    → "Basel"
+      Lausanne                  → "Lausanne"
+      Lugano                    → "Lugano"
+      St. Gallen                → "St. Gallen"
+      Winterthur / Wntertur     → "Winterthur"
+      Other cities: use standard English / international spelling.
+  • canton codes   → always 2-letter uppercase:
+      Zurich/Zürich → ZH, Bern → BE, Lucerne → LU, Uri → UR, Schwyz → SZ,
+      Obwalden → OW, Nidwalden → NW, Glarus → GL, Zug → ZG, Fribourg → FR,
+      Solothurn → SO, Basel-Stadt → BS, Basel-Landschaft → BL,
+      Schaffhausen → SH, Appenzell Ausserrhoden → AR, Appenzell Innerrhoden → AI,
+      St. Gallen → SG, Graubünden/Grisons → GR, Aargau → AG, Thurgau → TG,
+      Ticino → TI, Vaud → VD, Valais/Wallis → VS, Neuchâtel → NE,
+      Geneva/Genf → GE, Jura → JU.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-HARD vs SOFT distinction
+STEP 1 — IDENTIFY CONSTRAINTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-HARD constraints are clearly stated, measurable facts that map directly to structured
-database columns and can be used as boolean/numeric/enum filters:
-  • specific city, zip code, or canton
-  • exact or bounded room count (e.g. "3.5-room", "at least 4 rooms", "2 or 3 rooms")
-  • numeric price cap / range in CHF
-  • numeric floor-area cap / range in m²
-  • explicit amenities: balcony, parking, elevator/lift, garage, fireplace
-  • pet/animal policy, child-friendly flag
-  • new building requirement
-  • availability date
-  • floor number (e.g. "ground floor", "top floor" only if building height is known → skip,
-    but "ground floor" → floor_max=0, "at least 3rd floor" → floor_min=3)
+Read the query and identify every distinct requirement or preference the user expresses.
+Each identified constraint must correspond to exactly ONE house attribute.
+Record the exact words from the query in source_phrase.
+Omit attributes that are not mentioned — do NOT output null/false defaults.
 
-SOFT constraints are vague, subjective, or indirect — they cannot be directly mapped to
-a column value:
-  • ambience adjectives: bright, sunny, cozy, modern, charming, spacious feel, homey
-  • view / environment: nice views, green surroundings, quiet, good neighborhood, city center
-  • unmeasured proximity: close to schools, near the train station, good commute
-  • vague price language: "not too expensive", "affordable", "cheap", "reasonable price"
-    (no number attached)
-  • style/finish: modern kitchen, high-end finishes, renovated
-  • "top floor" when building height is unknown
-  • HEDGED / PREFERRED constraints — any clearly measurable constraint that is stated as a
-    preference, wish, or uncertainty rather than a requirement:
-      rooms  : "around 3 rooms", "roughly 4 rooms", "maybe 3-room", "about 2 rooms",
-               "3 rooms would be nice", "preferably 3 rooms", "ideally 4-room",
-               "3 rooms or so", "flexible on rooms", "3-room if possible"
-      price  : "ideally under CHF 2000", "budget around CHF 2500", "preferably below 3000"
-               (hedged number → SOFT; no number set in hard)
-      location: "preferably in Zurich", "ideally in Basel", "somewhere around Bern"
-               (hedged city → SOFT; no object_city set in hard)
-      amenities: "balcony would be nice", "ideally with parking", "a garage would be a plus",
-               "parking if possible", "elevator would be handy" → SOFT (do NOT set prop_* true)
-    Rule: if the user expresses a wish/preference rather than a requirement, put the phrase
-    in soft keywords and leave the corresponding hard field as null.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2 — HARD vs SOFT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+constraint_type = "hard"  — user states the constraint clearly and unambiguously.
+constraint_type = "soft"  — user expresses a preference, wish, or uncertainty.
+
+HARD examples: "with balcony", "max CHF 2500", "in Zurich", "must allow pets",
+               "at least 3 rooms", "available from September 2026"
+SOFT examples: "balcony would be nice", "ideally in Zurich", "preferably 3 rooms",
+               "around CHF 2000", "not too expensive", "quiet if possible",
+               "top floor", "close to schools", "bright", "modern feel",
+               "roughly 4 rooms", "views would be great"
+
+Hedging rule: a hedging word ("preferably", "ideally", "maybe", "around", "roughly",
+"if possible", "would be nice") softens only the noun/value it directly modifies.
+  "Preferably a 4-room flat in Zurich, under CHF 2500"
+    → number_of_rooms SOFT, object_city HARD, price HARD
+
+Ambiguity rule: when in doubt, classify as soft.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3 — ASSIGN KEY (predefined vs not predefined)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Predefined features (set predefined: true, use exact name as key):
+{PREDEFINED_FEATURES}
+
+If the constraint maps exactly to one of the above features, use that feature name.
+If no predefined feature captures the constraint, invent an informative snake_case key
+and set predefined: false  (e.g. "distance_to_eth", "distance_to_supermarket",
+"nearby_lake", "available_from").
+
+Key selection guidance:
+  • "apartment" / "flat"   → object_type  (expression: "this == 'apartment'")
+  • "house" / "villa"      → is_house     (expression: "this == true")
+  • "penthouse"            → is_penthouse (expression: "this == true")
+  • "attic flat"           → is_attic_flat (expression: "this == true")
+  • "ground floor"         → is_ground_floor (expression: "this == true")
+                             also optionally floor (expression: "this == 0")
+  • "rent" / "for rent"    → offer_type   (expression: "this == 'rent'")
+  • "buy" / "for sale"     → offer_type   (expression: "this == 'sale'")
+  • numeric price          → price
+  • numeric area           → area
+  • numeric rooms          → number_of_rooms
+  • numeric floor          → floor
+  • city name              → object_city
+  • postal code            → object_zip
+  • canton / state         → object_state
+  • available from [date]  → available_from  (not predefined, predefined: false)
+  • "available immediately"→ availability_immediate (predefined: true)
+  • "bright" / "hell"      → vibe_bright_light
+  • "sunny"                → vibe_sunny
+  • "quiet" / "peaceful"   → vibe_quiet_peaceful
+  • "modern"               → vibe_modern
+  • "cozy" / "gemütlich"   → vibe_cozy
+  • "luxury"               → vibe_luxury_premium
+  • "family-friendly"      → vibe_family_friendly  AND/OR prop_child_friendly
+  • "furnished" / "möbliert"→ is_furnished
+  • "close to schools"     → close_to_schools
+  • "close to university"  → close_to_university
+  • "close to train station"→ close_to_train_station
+  • "good public transport"→ commute_excellent OR close_to_bus_tram
+  • "pets allowed"         → animal_allowed
+  • "wheelchair accessible"→ is_wheelchair_accessible
+  • "newly renovated"      → condition_newly_renovated
+  • "needs renovation"     → condition_needs_renovation
+  • "new building"         → is_new_building
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4 — STANDARDISED EXPRESSION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Use 'this' as the variable.  Choose the format based on attribute type:
+
+  Boolean attribute present   → "this == true"
+  Boolean attribute absent    → "this == false"
+  Exact numeric               → "this == 3.5"
+  Numeric upper bound         → "this <= 2500"
+  Numeric lower bound         → "this >= 80"
+  Numeric range               → "2000 <= this <= 3000"
+  Negation (single)           → "this != 8033"
+  Set inclusion               → "this in [8001, 8002, 8003]"
+  Set exclusion               → "this not in [8004, 8011]"
+  Exact string / keyword      → "this == 'Zurich'"   |  "this == 'rent'"
+  String set inclusion        → "this in ['Zurich', 'Basel']"
+  String set exclusion        → "this not in ['Zurich', 'Basel']"
+  Date lower bound            → "this >= '2026-09-01'"
+  Predefined distance field   → numeric meters: "this <= 500"
+  Non-predefined proximity    → "isclose(this, 5min by foot)"
+                              | "this <= 25min public transport"
+
+Notes:
+  • Rooms: "3.5-room" → "this == 3.5"  |  "at least 3 rooms" → "this >= 3"
+           "2 or 3 rooms" → "this in [2, 3]"  |  "studio" → "this == 1"
+           "1-bedroom" (Swiss: 1BR + living) → "this == 2.5"
+           "2 or 3 or 4 rooms" → "this in [2, 3, 4]"
+  • Zip / city (multiple): "8001 or 8002" → "this in [8001, 8002]"
+           "not 8004 or 8011" → "this not in [8004, 8011]"
+           "Basel or Zurich" → "this in ['Basel', 'Zurich']"
+  • Price: always in CHF (monthly for RENT, total for SALE)
+  • Floor: "ground floor" → "this == 0"  |  "at least 3rd floor" → "this >= 3"
+           "top floor" → soft, expression "this == 'top'"
+  • Canton: always 2-letter uppercase code, e.g. "this == 'ZH'"
+  • Dates:  "from September 2026" → "this >= '2026-09-01'"
+            "from July 1st 2026"  → "this >= '2026-07-01'"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT SCHEMA (return exactly this JSON, no markdown)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{
-  "hard_constraints": {
-    "exact_rooms":        number | null,
-    "min_rooms":          number | null,
-    "max_rooms":          number | null,
-    "min_price_chf":      number | null,
-    "max_price_chf":      number | null,
-    "min_area_sqm":       number | null,
-    "max_area_sqm":       number | null,
-    "object_city":        string | null,
-    "object_zip":         string | null,
-    "object_state":       string | null,
-    "prop_balcony":       true | false | null,
-    "prop_elevator":      true | false | null,
-    "prop_parking":       true | false | null,
-    "prop_garage":        true | false | null,
-    "prop_fireplace":     true | false | null,
-    "prop_child_friendly":true | false | null,
-    "animal_allowed":     true | false | null,
-    "is_new_building":    true | false | null,
-    "available_from":     "YYYY-MM-DD" | null,
-    "floor_min":          integer | null,
-    "floor_max":          integer | null
-  },
-  "soft_constraints": {
-    "keywords":           [ list of short keyword/phrase strings ],
-    "raw_description":    string | null
-  }
-}
+{{
+  "constraints": [
+    {{
+      "source_phrase":    "<exact words from input>",
+      "key":              "<predefined_feature_name or informative_snake_case>",
+      "predefined":       true | false,
+      "constraint_type":  "hard" | "soft",
+      "expression":       "<this expression>"
+    }},
+    ...
+  ]
+}}
+
+Rules:
+  • One object per distinct attribute — never merge two attributes into one entry.
+  • Omit attributes not mentioned — do NOT emit entries with null or default values.
+  • Output only the JSON object, no explanation, no markdown.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-EXTRACTION RULES
+EXAMPLES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Rooms:
-  HARD — user states a firm requirement:
-    "3.5-room" / "3.5 rooms"  → exact_rooms: 3.5
-    "at least 4 rooms"         → min_rooms: 4
-    "up to 3 rooms"            → max_rooms: 3
-    "2 or 3 rooms"             → min_rooms: 2, max_rooms: 3
-    "studio" / "1-room"        → exact_rooms: 1
-    "1-bedroom flat"           → exact_rooms: 2.5  (Swiss: 1BR + living ≈ 2.5 rooms)
-  SOFT — user expresses a preference or uncertainty (leave all room hard fields null):
-    "around 3 rooms" / "roughly 4 rooms" / "about 2 rooms" / "approximately 3-room"
-    "preferably 3 rooms" / "ideally 4 rooms" / "maybe a 3-room"
-    "3 rooms would be nice" / "3-room if possible" / "3 rooms or so"
-    "flexible on size" / "not sure how many rooms" / "3-room but open to other options"
+Query: "3.5-room bright apartment in Zurich under CHF 2800 with balcony"
+{{
+  "constraints": [
+    {{"source_phrase": "3.5-room",        "key": "number_of_rooms", "predefined": true,  "constraint_type": "hard", "expression": "this == 3.5"}},
+    {{"source_phrase": "apartment",       "key": "object_type",     "predefined": true,  "constraint_type": "hard", "expression": "this == 'apartment'"}},
+    {{"source_phrase": "bright",          "key": "vibe_bright_light","predefined": true, "constraint_type": "soft", "expression": "this == true"}},
+    {{"source_phrase": "in Zurich",       "key": "object_city",     "predefined": true,  "constraint_type": "hard", "expression": "this == 'Zurich'"}},
+    {{"source_phrase": "under CHF 2800",  "key": "price",           "predefined": true,  "constraint_type": "hard", "expression": "this <= 2800"}},
+    {{"source_phrase": "with balcony",    "key": "prop_balcony",    "predefined": true,  "constraint_type": "hard", "expression": "this == true"}}
+  ]
+}}
 
-Price (CHF, monthly for RENT / total for SALE):
-  HARD — firm number stated:
-    "under CHF 2800" / "max CHF 2800" / "below 2800"  → max_price_chf: 2800
-    "from CHF 2000"                                     → min_price_chf: 2000
-    "CHF 2000–3000" / "between 2000 and 3000"          → min_price_chf: 2000, max_price_chf: 3000
-  SOFT — hedged or no number:
-    "not too expensive" / "affordable" / "cheap"        → SOFT only
-    "ideally under CHF 2000" / "budget around CHF 2500" / "preferably below 3000" → SOFT only
-    (hedged number: put phrase in soft, leave price hard fields null)
+Query: "Ich suche eine ruhige Wohnung in Zürich, idealerweise mit Balkon, max. 2500 Franken"
+(German: "I'm looking for a quiet apartment in Zurich, ideally with balcony, max. 2500 francs")
+{{
+  "constraints": [
+    {{"source_phrase": "ruhige",          "key": "vibe_quiet_peaceful","predefined": true,"constraint_type": "soft", "expression": "this == true"}},
+    {{"source_phrase": "Wohnung",         "key": "object_type",     "predefined": true,  "constraint_type": "hard", "expression": "this == 'apartment'"}},
+    {{"source_phrase": "in Zürich",       "key": "object_city",     "predefined": true,  "constraint_type": "hard", "expression": "this == 'Zurich'"}},
+    {{"source_phrase": "idealerweise mit Balkon", "key": "prop_balcony", "predefined": true, "constraint_type": "soft", "expression": "this == true"}},
+    {{"source_phrase": "max. 2500 Franken","key": "price",          "predefined": true,  "constraint_type": "hard", "expression": "this <= 2500"}}
+  ]
+}}
 
-Location:
-  HARD — firm location stated:
-    object_city   → normalize to standard English city name:
-                    Zürich/Zuirch/Zurych → "Zurich"
-                    Genf/Genève/Ginebra  → "Geneva"
-                    Luzern/Lucerne       → "Lucerne"
-                    Berne/Bern           → "Bern"
-                    Basel/Bâle/Basilea   → "Basel"
-                    Lausanne             → "Lausanne"
-                    Lugano               → "Lugano"
-                    St. Gallen           → "St. Gallen"
-                    Winterthur/Wntertur  → "Winterthur"
-                    Other cities: use the standard English/international spelling.
-    object_zip    → postal code string if given.
-    object_state  → always output as 2-letter uppercase Swiss canton code:
-                    Zurich/Zürich → ZH, Bern → BE, Lucerne/Luzern → LU, Uri → UR,
-                    Schwyz → SZ, Obwalden → OW, Nidwalden → NW, Glarus → GL,
-                    Zug → ZG, Fribourg/Freiburg → FR, Solothurn → SO, Basel-Stadt → BS,
-                    Basel-Landschaft → BL, Schaffhausen → SH, Appenzell Ausserrhoden → AR,
-                    Appenzell Innerrhoden → AI, St. Gallen → SG, Graubünden/Grisons → GR,
-                    Aargau → AG, Thurgau → TG, Ticino → TI, Vaud → VD, Valais/Wallis → VS,
-                    Neuchâtel → NE, Geneva/Genf → GE, Jura → JU.
-    Set object_state only when the user explicitly mentions a canton. City alone does not imply canton.
-  SOFT — hedged location (leave object_city/object_zip/object_state null):
-    "preferably in Zurich" / "ideally in Basel" / "somewhere around Bern"
-    "maybe Zurich or Geneva" (multiple ambiguous cities → SOFT)
+Query: "Near ETH Zurich, 2 rooms, max CHF 1800, close to supermarket on foot"
+{{
+  "constraints": [
+    {{"source_phrase": "Near ETH Zurich", "key": "distance_to_eth", "predefined": false, "constraint_type": "soft", "expression": "isclose(this, 15min public transport)"}},
+    {{"source_phrase": "2 rooms",         "key": "number_of_rooms", "predefined": true,  "constraint_type": "hard", "expression": "this == 2"}},
+    {{"source_phrase": "max CHF 1800",    "key": "price",           "predefined": true,  "constraint_type": "hard", "expression": "this <= 1800"}},
+    {{"source_phrase": "close to supermarket on foot", "key": "distance_shop", "predefined": true, "constraint_type": "soft", "expression": "isclose(this, 5min by foot)"}}
 
-Dates:
-  "from September 2026" → available_from: "2026-09-01"
-  "from July 1st 2026"  → available_from: "2026-07-01"
+  ]
+}}
 
-Floor:
-  "ground floor"        → floor_max: 0
-  "first floor or above"→ floor_min: 1
-  "at least 3rd floor"  → floor_min: 3
-  "top floor"           → SOFT only
-
-Amenities:
-  HARD — explicitly required:
-    "with balcony"        → prop_balcony: true
-    "must have parking"   → prop_parking: true
-    "with lift/elevator"  → prop_elevator: true
-    "with garage"         → prop_garage: true
-    "fireplace"           → prop_fireplace: true
-    "pet-friendly" / "pets allowed" / "allows dogs/cats" / "must allow pets" → animal_allowed: true
-    "no pets allowed"     → animal_allowed: false
-    "family-friendly" / "child-friendly" / "good for families/kids" → prop_child_friendly: true
-  SOFT — hedged/preferred (leave prop_* null):
-    "balcony would be nice" / "ideally with balcony" / "balcony a plus" / "balcony if possible"
-    "parking would be handy" / "ideally with parking" / "parking if available"
-    "elevator would be great" / "garage would be a bonus"
-  NEUTRAL — no preference stated:
-    "no balcony needed" → prop_balcony: null
-
-New building:
-  "new building" / "newly built" / "brand new" → is_new_building: true
-
-Scope of hedging:
-  A hedging word ("preferably", "ideally", "maybe", "around", "roughly") only softens the
-  specific noun/value it directly modifies. It does NOT make the entire sentence soft.
-  Examples:
-    "Preferably a 4-room flat in Zurich, under CHF 2500"
-      → exact_rooms: null (soft), object_city: "Zurich" (hard), max_price_chf: 2500 (hard)
-    "Ideally 3 rooms, must be in Bern, with balcony"
-      → exact_rooms: null (soft), object_city: "Bern" (hard), prop_balcony: true (hard)
-  Rule: explicit numeric limits ("under CHF X", "max CHF X", "at least N sqm") are ALWAYS
-  hard constraints regardless of hedging language elsewhere in the query.
-
-Ambiguity rule: when in doubt, classify as SOFT.
+Query: "2 or 3 room flat in postal code 8001 or 8002, not 8004, under CHF 2000"
+{{
+  "constraints": [
+    {{"source_phrase": "2 or 3 room",     "key": "number_of_rooms", "predefined": true,  "constraint_type": "hard", "expression": "this in [2, 3]"}},
+    {{"source_phrase": "flat",            "key": "object_type",     "predefined": true,  "constraint_type": "hard", "expression": "this == 'apartment'"}},
+    {{"source_phrase": "postal code 8001 or 8002", "key": "object_zip", "predefined": true, "constraint_type": "hard", "expression": "this in [8001, 8002]"}},
+    {{"source_phrase": "not 8004",        "key": "object_zip",      "predefined": true,  "constraint_type": "hard", "expression": "this != 8004"}},
+    {{"source_phrase": "under CHF 2000",  "key": "price",           "predefined": true,  "constraint_type": "hard", "expression": "this <= 2000"}}
+  ]
+}}
 """
 
 
 def build_user_message(query: str) -> str:
     return f"Parse this real estate query:\n\n{query}"
+

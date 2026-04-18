@@ -1,4 +1,4 @@
 from .parser import QueryParser
-from .schema import HardConstraints, ParsedQuery, SoftConstraints
+from .schema import Constraint, ParsedQuery
 
-__all__ = ["QueryParser", "ParsedQuery", "HardConstraints", "SoftConstraints"]
+__all__ = ["QueryParser", "ParsedQuery", "Constraint"]
