@@ -87,7 +87,7 @@ def _render_markdown(results: list[dict[str, Any]]) -> str:
         )
     return header + "\n".join(rows) + "\n"
 
-def test_with_query_and_soft_constraints() -> None:
+def test_with_query() -> None:
     repo_root = Path(__file__).resolve().parents[1]
 
     query = "Ich suche etwas Kleineres in Lausanne, möglichst in der Nähe von EPFL, gern möbliert, unter 2100 CHF, mit guter Anbindung, und am besten in einer Ecke, die sich sicher, entspannt und nicht komplett anonym anfühlt."
