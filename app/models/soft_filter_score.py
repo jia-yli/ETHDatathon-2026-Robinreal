@@ -1,3 +1,5 @@
+from typing import Any, Dict, List
+
 from app.participant.process_constraints import _evaluate_constraint
 
 def get_soft_filter_scores(candidates: list[dict[str, Any]], soft_facts: dict[str, Any]) -> list[float]:
