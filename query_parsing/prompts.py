@@ -246,3 +246,4 @@ Query: "2 or 3 room flat in postal code 8001 or 8002, not 8004, under CHF 2000"
 
 def build_user_message(query: str) -> str:
     return f"Parse this real estate query:\n\n{query}"
+

@@ -12,7 +12,7 @@ from typing import Optional
 from openai import OpenAI
 
 from .prompts import SYSTEM_PROMPT, build_user_message
-from .schema import HardConstraints, ParsedQuery, SoftConstraints
+from .schema import Constraint, ParsedQuery
 
 # Default location of the API key file (relative to this package)
 _DEFAULT_KEY_FILE = Path(__file__).parent.parent / "tests" / "deepseekapi.txt"
@@ -89,10 +89,10 @@ class QueryParser:
         raw_json = response.choices[0].message.content
         data = json.loads(raw_json)
 
-        hard = HardConstraints(**data.get("hard_constraints", {}))
-        soft = SoftConstraints(**data.get("soft_constraints", {}))
+        constraints = [
+            Constraint(**c) for c in data.get("constraints", [])
+        ]
         return ParsedQuery(
             original_query=query,
-            hard_constraints=hard,
-            soft_constraints=soft,
+            constraints=constraints,
         )
