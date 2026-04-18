@@ -72,7 +72,7 @@ SOFT examples: "balcony would be nice", "ideally in Zurich", "preferably 3 rooms
                "top floor", "close to schools", "bright", "modern feel",
                "roughly 4 rooms", "views would be great"
 
-Hedging rule: a hedging word ("preferably", "ideally", "maybe", "around", "roughly",
+Hedging rule: a hedging word (e.g. "preferably", "ideally", "maybe", "around", "roughly",
 "if possible", "would be nice") softens only the noun/value it directly modifies.
   "Preferably a 4-room flat in Zurich, under CHF 2500"
     → number_of_rooms SOFT, object_city HARD, price HARD
@@ -119,7 +119,16 @@ Key selection guidance:
   • "close to schools"     → close_to_schools
   • "close to university"  → close_to_university
   • "close to train station"→ close_to_train_station
-  • "good public transport"→ commute_excellent OR close_to_bus_tram
+  • "good public transport" / "commute" / "public transport access"
+                           → commute_excellent
+  • "close to workplace" / "near my work" / "short commute" / "nah an der Arbeit"
+                           → commute_excellent (use predefined, NOT a custom key)
+  • "great views" / "nice views" / "views" / "Aussicht"
+                           → view_nature (or view_lake / view_mountains / view_city
+                             when specific view type is mentioned)
+  • "near the lake" / "nahe am See" / "near water"
+                           → surroundings_water (proximity, NOT view_lake)
+  • "lake view" / "Seeblick" → view_lake
   • "pets allowed"         → animal_allowed
   • "wheelchair accessible"→ is_wheelchair_accessible
   • "newly renovated"      → condition_newly_renovated
