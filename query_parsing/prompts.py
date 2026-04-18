@@ -9,6 +9,17 @@ Your job: extract structured requirements from a natural-language user query and
 single JSON object — nothing else.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LANGUAGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+The user may write in any language (German, French, Italian, English, etc.).
+All output MUST be in English — regardless of input language:
+  • soft_constraints.keywords  → translate to English (e.g. "ruhig" → "quiet",
+                                   "hell" → "bright", "möbliert" → "furnished")
+  • soft_constraints.raw_description → English
+  • object_city → standard English city name (see normalization table below)
+Also correct typos (e.g. "Zuirch" → "Zurich", "Wntertur" → "Winterthur").
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 HARD vs SOFT distinction
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 HARD constraints are clearly stated, measurable facts that map directly to structured
@@ -17,8 +28,6 @@ database columns and can be used as boolean/numeric/enum filters:
   • exact or bounded room count (e.g. "3.5-room", "at least 4 rooms", "2 or 3 rooms")
   • numeric price cap / range in CHF
   • numeric floor-area cap / range in m²
-  • offer type: rent vs buy
-  • property type: apartment/flat/studio → Wohnung ; house/villa/chalet/bungalow → Haus
   • explicit amenities: balcony, parking, elevator/lift, garage, fireplace
   • pet/animal policy, child-friendly flag
   • new building requirement
@@ -54,8 +63,6 @@ OUTPUT SCHEMA (return exactly this JSON, no markdown)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {
   "hard_constraints": {
-    "offer_type":         "RENT" | "SALE" | null,
-    "object_category":    "Wohnung" | "Haus" | "Parkplatz" | "Gewerbeobjekt" | "Gastgewerbe" | "Wohnnebenraeume" | null,
     "exact_rooms":        number | null,
     "min_rooms":          number | null,
     "max_rooms":          number | null,
@@ -111,17 +118,19 @@ Price (CHF, monthly for RENT / total for SALE):
     "ideally under CHF 2000" / "budget around CHF 2500" / "preferably below 3000" → SOFT only
     (hedged number: put phrase in soft, leave price hard fields null)
 
-Offer type:
-  "rent" / "rental" / "to rent"                → offer_type: "RENT"
-  "buy" / "purchase" / "for sale" / "to buy"   → offer_type: "SALE"
-
-Property category:
-  apartment / flat / studio / penthouse / loft → object_category: "Wohnung"
-  house / villa / chalet / bungalow / detached  → object_category: "Haus"
-
 Location:
   HARD — firm location stated:
-    object_city   → preserve original spelling of the city name.
+    object_city   → normalize to standard English city name:
+                    Zürich/Zuirch/Zurych → "Zurich"
+                    Genf/Genève/Ginebra  → "Geneva"
+                    Luzern/Lucerne       → "Lucerne"
+                    Berne/Bern           → "Bern"
+                    Basel/Bâle/Basilea   → "Basel"
+                    Lausanne             → "Lausanne"
+                    Lugano               → "Lugano"
+                    St. Gallen           → "St. Gallen"
+                    Winterthur/Wntertur  → "Winterthur"
+                    Other cities: use the standard English/international spelling.
     object_zip    → postal code string if given.
     object_state  → always output as 2-letter uppercase Swiss canton code:
                     Zurich/Zürich → ZH, Bern → BE, Lucerne/Luzern → LU, Uri → UR,

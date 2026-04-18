@@ -5,8 +5,6 @@ Hard constraints map directly to filterable database columns.
 Column names and value types match the dataset exactly (see datasets/raw/raw_data/).
 
 Dataset column reference used for filtering:
-  offer_type          → "RENT" | "SALE"          (structured_data has "SALE", robinreal only "RENT")
-  object_category     → "Wohnung" | "Haus" | "Parkplatz" | "Gewerbeobjekt" | "Gastgewerbe" | "Wohnnebenraeume"
   number_of_rooms     → float  (e.g. 3.5)
   price               → float  (total price; for RENT this is monthly gross)
   rent_net            → float  (net monthly rent)
@@ -31,7 +29,7 @@ Soft constraints are vague/subjective and passed downstream for semantic/embeddi
 
 from __future__ import annotations
 
-from typing import List, Literal, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -41,14 +39,6 @@ class HardConstraints(BaseModel):
     Constraints that map directly to dataset column filters.
     Field names match dataset columns exactly where possible.
     """
-
-    # --- maps to column: offer_type ---
-    offer_type: Optional[Literal["RENT", "SALE"]] = None
-
-    # --- maps to column: object_category ---
-    object_category: Optional[
-        Literal["Wohnung", "Haus", "Parkplatz", "Gewerbeobjekt", "Gastgewerbe", "Wohnnebenraeume"]
-    ] = None
 
     # --- maps to column: number_of_rooms (range filter) ---
     min_rooms: Optional[float] = None

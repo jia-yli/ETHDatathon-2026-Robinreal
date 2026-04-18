@@ -79,7 +79,7 @@ def load_test_cases() -> List[Dict[str, Any]]:
         reader = csv.DictReader(f)
         for row in reader:
             hard: Dict[str, Any] = {}
-            for col in ("offer_type", "object_category", "object_city", "object_zip",
+            for col in ("object_city", "object_zip",
                         "object_state", "available_from"):
                 v = _parse_str(row[col])
                 if v is not None:
