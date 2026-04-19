@@ -125,7 +125,12 @@ def get_value_scores(
         _get_feature_score(str(c.get("listing_id", ""))) for c in candidates
     ]
 
-    prices = [float(c.get("price") or 0.0) for c in candidates]
+    # Clamp unrealistically low prices: anything below 500 CHF is treated as
+    # 500 CHF so that suspiciously cheap (likely data-quality) listings do not
+    # get a spurious "cheapest" bonus.
+    # 500 CHF/month is chosen as the practical minimum for a habitable Swiss rental.
+    _PRICE_FLOOR = 500.0
+    prices = [max(float(c.get("price") or 0.0), _PRICE_FLOOR) if float(c.get("price") or 0.0) > 0.0 else 0.0 for c in candidates]
     valid_prices = [p for p in prices if p > 0.0]
 
     if valid_prices and max(valid_prices) > min(valid_prices):

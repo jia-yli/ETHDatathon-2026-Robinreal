@@ -1,4 +1,5 @@
 from typing import Any
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 
@@ -13,7 +14,7 @@ def get_similarity_scores(
     soft_facts_str = soft_facts.get("original_query", "")
     soft_facts_embed = get_text_embedding(soft_facts_str)
 
-    candidate_texts = [ candidate.get("description", "") for candidate in candidates ]
+    candidate_texts = [ "title: " + candidate.get("title", "") + "; description: " + candidate.get("description", "") for candidate in candidates ]
     candidate_embeds = get_text_embedding(candidate_texts)
 
     for i, candidate in enumerate(candidates):
@@ -27,16 +28,24 @@ def get_image_similarity_scores(
     soft_facts: dict[str, Any],
 ) -> list[float]:
 
-    scores = []
     soft_facts_str = soft_facts.get("original_query", "")
     soft_facts_embed = get_text_embedding(soft_facts_str)
-    for candidate in candidates:
+
+    def _fetch(candidate: dict[str, Any]) -> float:
         image_urls = candidate.get("image_urls", [])
         try:
             candidate_embed = get_image_embedding(image_urls[0])
-            soft_facts_embed_padded = np.pad(soft_facts_embed, (0, len(candidate_embed) - len(soft_facts_embed)), mode='constant')
-            score = get_cosine_similarity(np.array(soft_facts_embed_padded), np.array(candidate_embed))
-            scores.append(score)
-        except Exception as e:
-            scores.append(0.0)
+            padded = np.pad(
+                soft_facts_embed,
+                (0, len(candidate_embed) - len(soft_facts_embed)),
+                mode="constant",
+            )
+            return get_cosine_similarity(np.array(padded), np.array(candidate_embed))
+        except Exception:
+            return 0.0
+
+    with ThreadPoolExecutor(max_workers=min(len(candidates), 10)) as executor:
+        futures = [executor.submit(_fetch, c) for c in candidates]
+        scores = [f.result() for f in futures]
+
     return scores

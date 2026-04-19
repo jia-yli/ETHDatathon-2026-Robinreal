@@ -8,13 +8,16 @@ from app.models.schemas import ListingData, RankedListingResult
 from app.models.similarity import get_image_similarity_scores, get_similarity_scores
 from app.models.soft_filter_score import get_soft_filter_scores
 from app.models.apartment_value import get_value_scores
+from app.models.proximity import get_proximity_scores
 
 # ── Stage 1 weights (must sum to 1) ───────────────────────────────────────
 # sim + soft together capture query relevance; value captures general apartment
 # quality / price-efficiency independent of the query.
-_W_SIM = 0.45
-_W_SOFT = 0.2
-_W_VALUE = 0.35
+# proximity captures geographic closeness to any landmark mentioned in the query.
+_W_SIM = 0.40
+_W_SOFT = 0.10
+_W_VALUE = 0.25
+_W_PROXIMITY = 0.25
 
 # ── Stage 2 combination weights (must sum to 1) ────────────────────────────
 # Pairwise LLM is the most authoritative signal; stage-1 acts as a prior;
@@ -33,24 +36,25 @@ def _normalize(values: list[float]) -> list[float]:
     return [(v - lo) / (hi - lo) for v in values]
 
 
-def _stage1_reason(
-    sim: float,
-    soft: float,
-    value: float,
-    all_sims: list[float],
-    all_softs: list[float],
-    all_values: list[float],
-) -> str:
-    sim_rank   = sorted(all_sims,   reverse=True).index(sim)
-    soft_rank  = sorted(all_softs,  reverse=True).index(soft)
-    value_rank = sorted(all_values, reverse=True).index(value)
-    best_rank  = min(sim_rank, soft_rank, value_rank)
-    if best_rank == sim_rank:
-        return "Strong semantic match to query"
-    elif best_rank == soft_rank:
-        return "Strong preference alignment"
+def _stage1_reason(sim: float, soft: float, value: float, proximity: float) -> str:
+    # Assign the reason to whichever component contributes most to this
+    # candidate's weighted stage-1 score.  Using weighted contributions
+    # (rather than global ranks) means that a signal with weight 0.10 can
+    # only win if it is notably higher than the other two — it won't
+    # dominate simply because many candidates share the same raw value.
+    w_sim      = _W_SIM      * sim
+    w_soft     = _W_SOFT     * soft
+    w_value    = _W_VALUE    * value
+    w_proximity = _W_PROXIMITY * proximity
+    best = max(w_sim, w_soft, w_value, w_proximity)
+    if best == w_proximity:
+        return "Near requested location."
+    elif best == w_sim:
+        return "Strong semantic match to query."
+    elif best == w_soft:
+        return "Strong preference alignment."
     else:
-        return "High-quality, good-value apartment"
+        return "High-quality, good-value apartment."
 
 
 def rank_listings(
@@ -70,20 +74,20 @@ def rank_listings(
     sim_scores         = get_similarity_scores(candidates, soft_facts)
     soft_filter_scores = get_soft_filter_scores(candidates, soft_facts)
     value_scores       = get_value_scores(candidates)  # O(1) table-lookup per candidate
+    proximity_scores   = get_proximity_scores(candidates, soft_facts.get("original_query", ""))
 
-    norm_sim   = _normalize(list(sim_scores))
-    norm_soft  = _normalize(list(soft_filter_scores))
-    norm_value = _normalize(list(value_scores))
+    norm_sim       = _normalize(list(sim_scores))
+    norm_soft      = _normalize(list(soft_filter_scores))
+    norm_value     = _normalize(list(value_scores))
+    norm_proximity = _normalize(proximity_scores)
 
     stage1_scores = [
-        _W_SIM * norm_sim[i] + _W_SOFT * norm_soft[i] + _W_VALUE * norm_value[i]
+        _W_SIM * norm_sim[i] + _W_SOFT * norm_soft[i]
+        + _W_VALUE * norm_value[i] + _W_PROXIMITY * norm_proximity[i]
         for i in range(len(candidates))
     ]
     stage1_reasons = [
-        _stage1_reason(
-            norm_sim[i], norm_soft[i], norm_value[i],
-            norm_sim, norm_soft, norm_value,
-        )
+        _stage1_reason(norm_sim[i], norm_soft[i], norm_value[i], norm_proximity[i])
         for i in range(len(candidates))
     ]
 
@@ -111,8 +115,10 @@ def rank_listings(
     query = soft_facts.get("original_query", "")
     pairwise_scores, pairwise_reasons = get_pairwise_scores(query, topk_candidates)
 
-    # Normalize each component independently to [0, 1]
-    norm_stage1   = _normalize(topk_stage1_scores)
+    # Normalize each component independently to [0, 1].
+    # stage1 scores are already in [0, 1] (weighted sum of normalized signals),
+    # so use them directly without re-normalizing.
+    norm_stage1   = topk_stage1_scores
     norm_pairwise = _normalize(pairwise_scores)
     norm_image    = _normalize(image_scores)
 
@@ -140,16 +146,13 @@ def rank_listings(
     )
     rest_tuples = cand_tuples[topk:]
     if rest_tuples:
-        floor = min(final_scores) if final_scores else 0.0
+        # Rest candidates only have stage-1 scores. Scale them by _W_STAGE1 so
+        # their maximum possible score (0.3) is naturally below any top-k
+        # candidate that won at least one pairwise comparison — no floor
+        # arithmetic needed.
         rest_s1 = [float(t[1]) for t in rest_tuples]
-        lo, hi = min(rest_s1), max(rest_s1)
-        _eps = 1e-6
-        if hi > lo:
-            rest_scaled = [(s - lo) / (hi - lo) * max(0.0, floor - _eps) for s in rest_s1]
-        else:
-            rest_scaled = [max(0.0, floor - _eps)] * len(rest_tuples)
         for idx, (c, _s, r) in enumerate(rest_tuples):
-            all_ranked.append((c, rest_scaled[idx], str(r)))  # type: ignore[arg-type]
+            all_ranked.append((c, _W_STAGE1 * rest_s1[idx], str(r)))  # type: ignore[arg-type]
 
     return [
         RankedListingResult(

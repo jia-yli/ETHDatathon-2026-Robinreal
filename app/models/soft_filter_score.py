@@ -12,7 +12,7 @@ def get_soft_filter_scores(candidates: list[dict[str, Any]], soft_facts: dict[st
             if key is None or expression is None:
                 continue
             try:
-                satisfied = _evaluate_constraint(candidate, key, expression)
+                satisfied = _evaluate_constraint(candidate, constraint)
                 total_score += 1.0 if satisfied else 0.0
             except Exception as e:
                 # print(f"Error evaluating soft constraint for candidate {candidate.get('id', 'N/A')}: {e}")

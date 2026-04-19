@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -23,8 +24,13 @@ _DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 _DEFAULT_MODEL = "deepseek-chat"
 _KEY_FILE = Path(__file__).parent.parent.parent / "tests" / "deepseekapi.txt"
 
+_client: OpenAI | None = None
+
 
 def _get_client() -> OpenAI:
+    global _client
+    if _client is not None:
+        return _client
     api_key = os.environ.get("DEEPSEEK_API_KEY", "").strip()
     if not api_key and _KEY_FILE.exists():
         api_key = _KEY_FILE.read_text().strip()
@@ -32,7 +38,8 @@ def _get_client() -> OpenAI:
         raise ValueError(
             "DeepSeek API key not found. Set DEEPSEEK_API_KEY or place key in tests/deepseekapi.txt."
         )
-    return OpenAI(api_key=api_key, base_url=_DEEPSEEK_BASE_URL)
+    _client = OpenAI(api_key=api_key, base_url=_DEEPSEEK_BASE_URL)
+    return _client
 
 
 def _candidate_summary(candidate: dict[str, Any]) -> str:
@@ -131,15 +138,21 @@ def get_pairwise_scores(
 
     client = _get_client()
 
-    for i in range(n):
-        for j in range(i + 1, n):
+    pairs = [(i, j) for i in range(n) for j in range(i + 1, n)]
+
+    with ThreadPoolExecutor(max_workers=min(len(pairs), 12)) as executor:
+        future_to_pair = {
+            executor.submit(compare_pair, query, candidates[i], candidates[j], client): (i, j)
+            for i, j in pairs
+        }
+        for future in as_completed(future_to_pair):
+            i, j = future_to_pair[future]
             try:
-                sa, sb, reason = compare_pair(query, candidates[i], candidates[j], client)
+                sa, sb, reason = future.result()
             except Exception:
                 sa, sb, reason = 0.5, 0.5, ""
             win_scores[i] += sa
             win_scores[j] += sb
-            # Attach reason to the winner so it explains why they're better
             if sa > sb and reason:
                 best_reason[i] = reason
             elif sb > sa and reason:
