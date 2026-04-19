@@ -1,0 +1,9 @@
+id,price,number_of_rooms,object_type,object_city,object_zip,object_state,is_furnished,prop_balcony,prop_garage,prop_elevator,animal_allowed,geo_lat,geo_lng,is_new_building,is_house,is_penthouse,distance_shop,distance_public_transport,offer_type,floor
+1,2200,3.5,apartment,Zurich,8001,ZH,False,True,False,True,True,47.3769,8.5476,False,False,False,150,80,rent,3
+2,3500,5.0,house,Bern,3001,BE,False,True,True,False,True,46.9490,7.4390,False,True,False,300,200,rent,0
+3,1200,1.0,apartment,Basel,4001,BS,True,False,False,False,True,47.5474,7.5896,False,False,False,100,50,rent,1
+4,2800,4.5,apartment,Lausanne,1001,VD,False,True,False,True,False,46.5191,6.5668,False,False,False,200,150,rent,5
+5,2500,3.5,apartment,Winterthur,8400,ZH,False,True,False,False,False,47.5006,8.7241,True,False,False,400,300,rent,2
+6,4000,6.0,apartment,Geneva,1200,GE,False,True,False,True,True,46.2101,6.1424,False,False,True,250,100,sale,8
+7,1800,2.0,apartment,Zurich,8004,ZH,True,False,False,False,True,47.3714,8.5342,False,False,False,80,120,rent,2
+8,3200,4.0,house,Zurich,8002,ZH,False,False,True,False,False,47.3800,8.5500,False,True,False,500,400,rent,0
