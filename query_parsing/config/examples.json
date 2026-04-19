@@ -1,0 +1,215 @@
+[
+  {
+    "query": "3.5-room bright apartment in Zurich under CHF 2800 with balcony",
+    "constraints": [
+      {
+        "source_phrase": "3.5-room",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.number_of_rooms == 3.5"
+      },
+      {
+        "source_phrase": "apartment",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.object_type == 'apartment'"
+      },
+      {
+        "source_phrase": "bright",
+        "constraint_type": "soft",
+        "clarity": "vague"
+      },
+      {
+        "source_phrase": "in Zurich",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.object_city == 'Zurich'"
+      },
+      {
+        "source_phrase": "under CHF 2800",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.price <= 2800"
+      },
+      {
+        "source_phrase": "with balcony",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.prop_balcony == true"
+      }
+    ]
+  },
+  {
+    "query": "Ich suche eine ruhige Wohnung in Zürich, idealerweise mit Balkon, max. 2500 Franken",
+    "note": "German: I'm looking for a quiet apartment in Zurich, ideally with balcony, max. 2500 francs",
+    "constraints": [
+      {
+        "source_phrase": "ruhige",
+        "constraint_type": "soft",
+        "clarity": "vague"
+      },
+      {
+        "source_phrase": "Wohnung",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.object_type == 'apartment'"
+      },
+      {
+        "source_phrase": "in Zürich",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.object_city == 'Zurich'"
+      },
+      {
+        "source_phrase": "idealerweise mit Balkon",
+        "constraint_type": "soft",
+        "clarity": "clear",
+        "expression": "this.prop_balcony == true"
+      },
+      {
+        "source_phrase": "max. 2500 Franken",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.price <= 2500"
+      }
+    ]
+  },
+  {
+    "query": "Near ETH Zurich, 2 rooms, max CHF 1800, close to supermarket on foot",
+    "constraints": [
+      {
+        "source_phrase": "Near ETH Zurich",
+        "constraint_type": "soft",
+        "clarity": "clear",
+        "expression": "distance(this.geo_lat, this.geo_lng, 47.3769, 8.5476) <= 2"
+      },
+      {
+        "source_phrase": "2 rooms",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.number_of_rooms == 2"
+      },
+      {
+        "source_phrase": "max CHF 1800",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.price <= 1800"
+      },
+      {
+        "source_phrase": "close to supermarket on foot",
+        "constraint_type": "soft",
+        "clarity": "clear",
+        "expression": "this.distance_shop <= 300"
+      }
+    ]
+  },
+  {
+    "query": "2 or 3 room flat in postal code 8001 or 8002, not 8004, under CHF 2000",
+    "constraints": [
+      {
+        "source_phrase": "2 or 3 room",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.number_of_rooms in [2, 3]"
+      },
+      {
+        "source_phrase": "flat",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.object_type == 'apartment'"
+      },
+      {
+        "source_phrase": "postal code 8001 or 8002",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.object_zip in [8001, 8002]"
+      },
+      {
+        "source_phrase": "not 8004",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.object_zip != 8004"
+      },
+      {
+        "source_phrase": "under CHF 2000",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.price <= 2000"
+      }
+    ]
+  },
+  {
+    "query": "Sunny penthouse for sale, not too expensive, available from September 2026, pets allowed",
+    "constraints": [
+      {
+        "source_phrase": "Sunny",
+        "constraint_type": "soft",
+        "clarity": "vague"
+      },
+      {
+        "source_phrase": "penthouse",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.is_penthouse == true"
+      },
+      {
+        "source_phrase": "for sale",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.offer_type == 'sale'"
+      },
+      {
+        "source_phrase": "not too expensive",
+        "constraint_type": "soft",
+        "clarity": "vague"
+      },
+      {
+        "source_phrase": "available from September 2026",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.available_from >= '2026-09-01'"
+      },
+      {
+        "source_phrase": "pets allowed",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.animal_allowed == true"
+      }
+    ]
+  },
+  {
+    "query": "Studio near EPFL in Lausanne, max CHF 1400, good public transport",
+    "constraints": [
+      {
+        "source_phrase": "Studio",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.number_of_rooms == 1"
+      },
+      {
+        "source_phrase": "near EPFL",
+        "constraint_type": "soft",
+        "clarity": "clear",
+        "expression": "distance(this.geo_lat, this.geo_lng, 46.5191, 6.5668) <= 3"
+      },
+      {
+        "source_phrase": "in Lausanne",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.object_city == 'Lausanne'"
+      },
+      {
+        "source_phrase": "max CHF 1400",
+        "constraint_type": "hard",
+        "clarity": "clear",
+        "expression": "this.price <= 1400"
+      },
+      {
+        "source_phrase": "good public transport",
+        "constraint_type": "soft",
+        "clarity": "clear",
+        "expression": "this.distance_public_transport <= 300"
+      }
+    ]
+  }
+]
