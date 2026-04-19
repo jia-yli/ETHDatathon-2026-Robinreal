@@ -59,12 +59,14 @@ def load_all_constraints(file_path: Path = None) -> List[List[Dict]]:
 
     return query_constraints
 
-def process_constraints(query_constraints: List[Dict], original_query: str) -> Tuple[Dict, Dict]:
-    """Process constraints for a single query and return hard/soft query dictionaries."""
-    predefined = [c for c in query_constraints if c.get("predefined", False)]
+def process_constraints(query_constraints: List[Dict], original_query: str) -> Tuple[Dict, Dict, Dict]:
+    """Process constraints for a single query and return hard/soft/vague-soft query dictionaries."""
+    clear = [c for c in query_constraints if c.get("clarity") == "clear"]
+    vague = [c for c in query_constraints if c.get("clarity") == "vague"]
 
-    hard_for_query = [c for c in predefined if c.get("constraint_type") == "hard"]
-    soft_for_query = [c for c in predefined if c.get("constraint_type") in ["hard", "soft"]]
+    hard_for_query = [c for c in clear if c.get("constraint_type") == "hard"]
+    soft_for_query = [c for c in clear if c.get("constraint_type") in ["hard", "soft"]]
+    vague_soft_for_query = [c for c in vague if c.get("constraint_type") in ["hard", "soft"]]
 
     hard_constraint_dict = {
         "original_query": original_query,
@@ -74,31 +76,40 @@ def process_constraints(query_constraints: List[Dict], original_query: str) -> T
         "original_query": original_query,
         "constraint_list": soft_for_query,
     }
+    vague_soft_constraint_dict = {
+        "original_query": original_query,
+        "constraint_list": vague_soft_for_query,
+    }
 
-    return hard_constraint_dict, soft_constraint_dict
+    return hard_constraint_dict, soft_constraint_dict, vague_soft_constraint_dict
 
 
-def process_all_query_constraints(query_constraints: List[List[Dict]], queries: List[str]) -> Tuple[List[Dict], List[Dict]]:
-    """Process all queries and return lists of hard/soft query dictionaries."""
+def process_all_query_constraints(query_constraints: List[List[Dict]], queries: List[str]) -> Tuple[List[Dict], List[Dict], List[Dict]]:
+    """Process all queries and return lists of hard/soft/vague-soft query dictionaries."""
     hard_constraints = []
     soft_constraints = []
+    vague_soft_constraints = []
     for query_constraint_list, original_query in zip(query_constraints, queries):
-        hard_dict, soft_dict = process_constraints(query_constraint_list, original_query)
+        hard_dict, soft_dict, vague_soft_dict = process_constraints(query_constraint_list, original_query)
         hard_constraints.append(hard_dict)
         soft_constraints.append(soft_dict)
-    return hard_constraints, soft_constraints
+        vague_soft_constraints.append(vague_soft_dict)
+    return hard_constraints, soft_constraints, vague_soft_constraints
 
 
 KEY_TO_FIELD: dict[str, str] = {
     "number_of_rooms": "rooms",
     "object_city": "city",
     "object_state": "canton",
+    "object_zip": "postal_code",
     "price": "price",
     "offer_type": "offer_type",
     "object_type": "object_type",
     "object_category": "object_category",
     "postal_code": "postal_code",
     "available_from": "available_from",
+    "geo_lat": "latitude",
+    "geo_lng": "longitude",
 }
 
 # DB columns (or derived boolean features) that hard-constraint eval can
@@ -125,9 +136,15 @@ _KNOWN_HARD_FILTERABLE_FIELDS: frozenset[str] = frozenset({
 })
 
 
-def _normalize_expression(expression: str) -> str:
-    """Replace the special 'this' placeholder with a value variable and normalize booleans."""
-    expression = expression.replace("this", "value")
+def _extract_column(expression: str) -> str | None:
+    """Extract the first 'column_name' from a 'this.column_name' pattern."""
+    m = re.search(r'\bthis\.([a-zA-Z_][a-zA-Z0-9_]*)\b', expression)
+    return m.group(1) if m else None
+
+
+def _normalize_expression(expression: str, column: str) -> str:
+    """Replace this.column with value and normalize booleans."""
+    expression = re.sub(r'\bthis\.' + re.escape(column) + r'\b', 'value', expression)
     expression = re.sub(r"\btrue\b", "True", expression, flags=re.IGNORECASE)
     expression = re.sub(r"\bfalse\b", "False", expression, flags=re.IGNORECASE)
     return expression
@@ -281,23 +298,27 @@ def _evaluate_constraint(
     - Residential query: fail (False) — be strict so spurious constraints
       don't let unrelated listings through.
     """
-    key = constraint.get("key")
     expression = constraint.get("expression", "")
-    if not key or not expression:
+    clarity = constraint.get("clarity", "clear")
+    if not expression or clarity == "vague":
         return False
 
-    value = _resolve_candidate_value(candidate, key)
+    column = _extract_column(expression)
+    if not column:
+        return False
+
+    value = _resolve_candidate_value(candidate, column)
     if value is None:
         # For is_house/is_apartment: a None value means object_type is NULL.
         # Apply strictly — listing must have a confirmed matching object_type.
-        if key.startswith("is_"):
+        if column.startswith("is_"):
             return False
         return is_non_residential
 
     # For string values (city names, etc.) normalize diacritics and case so that
     # 'Zürich' matches 'Zurich', 'Genève' matches 'Geneva', etc.
     if isinstance(value, str):
-        if key == "object_city" or KEY_TO_FIELD.get(key) == "city":
+        if column == "object_city" or KEY_TO_FIELD.get(column) == "city":
             value = _normalize_city(value)
             expression = re.sub(
                 r"'([^']*)'|\"([^\"]*)\"",
@@ -308,12 +329,11 @@ def _evaluate_constraint(
             value = _ascii_fold(value)
             expression = _normalize_str_literals(expression)
 
-    normalized = _normalize_expression(expression)
+    normalized = _normalize_expression(expression, column)
 
     try:
         return bool(eval(normalized, {"__builtins__": None}, {"value": value}))
-    except Exception as e:
-        # print(f"Error evaluating constraint '{normalized}' for key '{key}': {e}")
+    except Exception:
         return False
 
 
@@ -362,23 +382,24 @@ _INSTITUTION_CITY: dict[str, str] = {
 
 
 def _infer_city_from_institution_constraints(constraints: list[dict]) -> list[dict]:
-    """Return implicit object_city hard constraints inferred from institution keys.
+    """Return implicit object_city hard constraints inferred from institution references.
 
-    If the LLM emitted a commute/proximity constraint targeting a named Swiss
-    institution (e.g. key='commute_to_eth_minutes') but no object_city constraint,
-    synthesize one so that geographically irrelevant listings are filtered out.
+    If the LLM emitted a proximity constraint targeting a named Swiss institution
+    (e.g. 'near ETH Zurich') but no object_city constraint, synthesize one so that
+    geographically irrelevant listings are filtered out.
     """
-    has_city = any(c.get("key") == "object_city" for c in constraints)
+    has_city = any("this.object_city" in c.get("expression", "") for c in constraints)
     if has_city:
         return []
     for c in constraints:
-        key_lower = c.get("key", "").lower()
+        search_text = (
+            c.get("source_phrase", "") + " " + c.get("expression", "")
+        ).lower()
         for institution, city in _INSTITUTION_CITY.items():
-            if institution in key_lower:
+            if institution in search_text:
                 return [{
-                    "key": "object_city",
-                    "expression": f"this == '{city}'",
-                    "predefined": True,
+                    "expression": f"this.object_city == '{city}'",
+                    "clarity": "clear",
                     "constraint_type": "hard",
                     "source_phrase": c.get("source_phrase", ""),
                 }]
@@ -394,10 +415,11 @@ def filter_hard_facts_via_exec(candidates: List[Dict], hard_constraints: Dict, q
     inferred = _infer_city_from_institution_constraints(raw_constraints)
     constraints = [
         c for c in (inferred + raw_constraints)
-        if c.get("key") not in _CATEGORY_KEYS
-        and c.get("key") not in _SOFT_ONLY_KEYS
-        and not _is_feature_key(c.get("key", ""))
-        and _is_known_filterable(c.get("key", ""))
+        if (col := _extract_column(c.get("expression", ""))) is not None
+        and col not in _CATEGORY_KEYS
+        and col not in _SOFT_ONLY_KEYS
+        and not _is_feature_key(col)
+        and _is_known_filterable(col)
     ]
 
     for candidate in candidates:

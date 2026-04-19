@@ -6,7 +6,7 @@ from typing import Any
 from app.models.llm_pairwise import get_pairwise_scores
 from app.models.schemas import ListingData, RankedListingResult
 from app.models.similarity import get_image_similarity_scores, get_similarity_scores
-from app.models.soft_filter_score import get_soft_filter_scores
+from app.models.soft_filter_score import get_soft_filter_scores, get_vague_soft_filter_scores
 from app.models.apartment_value import get_value_scores
 from app.models.proximity import get_proximity_scores
 
@@ -21,10 +21,12 @@ _W_PROXIMITY = 0.25
 
 # ── Stage 2 combination weights (must sum to 1) ────────────────────────────
 # Pairwise LLM is the most authoritative signal; stage-1 acts as a prior;
+# vague_soft uses embedding similarity on top-k only (too costly for all candidates);
 # image similarity adds a visual quality bonus.
-_W_STAGE1 = 0.3
-_W_PAIRWISE = 0.5
-_W_IMAGE = 0.2
+_W_STAGE1 = 0.25
+_W_PAIRWISE = 0.45
+_W_VAGUE_SOFT = 0.15
+_W_IMAGE = 0.15
 
 _TOP_K = 10
 
@@ -37,11 +39,6 @@ def _normalize(values: list[float]) -> list[float]:
 
 
 def _stage1_reason(sim: float, soft: float, value: float, proximity: float) -> str:
-    # Assign the reason to whichever component contributes most to this
-    # candidate's weighted stage-1 score.  Using weighted contributions
-    # (rather than global ranks) means that a signal with weight 0.10 can
-    # only win if it is notably higher than the other two — it won't
-    # dominate simply because many candidates share the same raw value.
     w_sim      = _W_SIM      * sim
     w_soft     = _W_SOFT     * soft
     w_value    = _W_VALUE    * value
@@ -60,6 +57,7 @@ def _stage1_reason(sim: float, soft: float, value: float, proximity: float) -> s
 def rank_listings(
     candidates: list[dict[str, Any]],
     soft_facts: dict[str, Any],
+    vague_soft_facts: dict[str, Any] | None = None,
 ) -> list[RankedListingResult]:
     if not candidates:
         return []
@@ -108,6 +106,9 @@ def rank_listings(
     # soft_facts is identical for every candidate — reuse directly
     topk_soft_facts = soft_facts
 
+    # Vague soft scoring — embedding similarity on top-k only (too costly for all candidates)
+    vague_soft_scores = get_vague_soft_filter_scores(topk_candidates, vague_soft_facts or {})
+
     # Image similarity (visual coherence with query)
     image_scores = get_image_similarity_scores(topk_candidates, topk_soft_facts)
 
@@ -118,13 +119,15 @@ def rank_listings(
     # Normalize each component independently to [0, 1].
     # stage1 scores are already in [0, 1] (weighted sum of normalized signals),
     # so use them directly without re-normalizing.
-    norm_stage1   = topk_stage1_scores
-    norm_pairwise = _normalize(pairwise_scores)
-    norm_image    = _normalize(image_scores)
+    norm_stage1      = topk_stage1_scores
+    norm_vague_soft  = _normalize(vague_soft_scores)
+    norm_pairwise    = _normalize(pairwise_scores)
+    norm_image       = _normalize(image_scores)
 
     # Combined final score
     final_scores = [
         _W_STAGE1 * norm_stage1[i]
+        + _W_VAGUE_SOFT * norm_vague_soft[i]
         + _W_PAIRWISE * norm_pairwise[i]
         + _W_IMAGE * norm_image[i]
         for i in range(topk)

@@ -40,14 +40,14 @@ def query_from_text(
         candidates = filter_future.result()
 
     query_constraints = [c.model_dump() for c in parsed.constraints]
-    query_hard_constraints, query_soft_constraints = process_constraints(query_constraints, query)
+    query_hard_constraints, query_soft_constraints, query_vague_soft_constraints = process_constraints(query_constraints, query)
 
     candidates = filter_hard_facts_via_exec(candidates, query_hard_constraints, query)
     candidates = filter_non_residential(candidates, query_hard_constraints, query_soft_constraints, query)
     candidates = candidates[offset: min(offset + limit, len(candidates))]
     candidates = filter_soft_facts(candidates, query_soft_constraints)
     return ListingsResponse(
-        listings=rank_listings(candidates, query_soft_constraints),
+        listings=rank_listings(candidates, query_soft_constraints, query_vague_soft_constraints),
         meta={},
     )
 

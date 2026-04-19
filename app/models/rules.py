@@ -125,23 +125,26 @@ def filter_non_residential(
     import re as _re
     _requested_categories: set[str] = set()
     for c in all_constraints:
-        if c.get("key") in ("object_type", "object_category"):
-            expr = c.get("expression", "")
-            # Extract string literals from expressions like "this == 'Tiefgarage'"
-            # or "this in ['Tiefgarage', 'Einzelgarage', 'Parkplatz']"
+        expr = c.get("expression", "")
+        _col_m = _re.search(r'\bthis\.([a-zA-Z_]+)\b', expr)
+        col = _col_m.group(1) if _col_m else c.get("key", "")
+        if col in ("object_type", "object_category"):
             _requested_categories.update(_re.findall(r"'([^']+)'", expr))
 
     for c in all_constraints:
-        if c.get("key") in ("object_type", "object_category"):
-            expr = c.get("expression", "").lower()
-            if any(cat.lower() in expr for cat in NON_RESIDENTIAL_CATEGORIES):
+        expr = c.get("expression", "")
+        _col_m = _re.search(r'\bthis\.([a-zA-Z_]+)\b', expr)
+        col = _col_m.group(1) if _col_m else c.get("key", "")
+        if col in ("object_type", "object_category"):
+            expr_lower = expr.lower()
+            if any(cat.lower() in expr_lower for cat in NON_RESIDENTIAL_CATEGORIES):
                 non_res = _keep_non_residential()
                 # If the LLM specified particular categories, narrow to those.
                 if _requested_categories:
                     narrowed = [l for l in non_res if l.get("object_category") in _requested_categories]
                     return narrowed if narrowed else non_res
                 return non_res
-            if any(term in expr for term in NON_RESIDENTIAL_TERMS):
+            if any(term in expr_lower for term in NON_RESIDENTIAL_TERMS):
                 return _keep_non_residential()
 
     # If the raw query text explicitly asks for non-residential listings
