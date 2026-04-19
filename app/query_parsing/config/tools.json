@@ -1,0 +1,104 @@
+{
+  "description": "Instructions / tools available to the LLM compiler. Each tool defines an operation on a property row (referred to as 'this'). Column values are accessed as 'this.column_name'. Produce an 'expression' that evaluates to boolean or numeric for each 'clear' constraint.",
+  "tools": [
+    {
+      "name": "compare_numeric",
+      "syntax": "this.<col> <op> <value>  |  <lo> <= this.<col> <= <hi>",
+      "ops": ["==", "!=", "<", "<=", ">", ">="],
+      "applicable_types": ["values"],
+      "description": "Compare a numeric column to a constant. The column is accessed as this.<col>.",
+      "examples": [
+        "this.price <= 2500",
+        "this.number_of_rooms >= 3",
+        "this.number_of_rooms == 3.5",
+        "2000 <= this.price <= 3000",
+        "this.area >= 80"
+      ]
+    },
+    {
+      "name": "compare_string",
+      "syntax": "this.<col> == '<value>'  |  this.<col> in [...]  |  this.<col> not in [...]",
+      "applicable_types": ["keywords"],
+      "description": "Compare a string/keyword column to a constant or set. City names must be standard English. Canton codes must be 2-letter uppercase.",
+      "examples": [
+        "this.object_city == 'Zurich'",
+        "this.offer_type == 'rent'",
+        "this.object_city in ['Zurich', 'Basel']",
+        "this.object_zip in [8001, 8002]",
+        "this.object_zip != 8004"
+      ]
+    },
+    {
+      "name": "boolean_check",
+      "syntax": "this.<col> == true  |  this.<col> == false",
+      "applicable_types": ["boolean"],
+      "description": "Check whether a boolean property column is present (true) or absent (false).",
+      "examples": [
+        "this.prop_balcony == true",
+        "this.is_furnished == true",
+        "this.animal_allowed == true"
+      ]
+    },
+    {
+      "name": "set_membership",
+      "syntax": "this.<col> in [v1, v2, ...]  |  this.<col> not in [v1, v2, ...]",
+      "applicable_types": ["values", "keywords"],
+      "description": "Check if the column value is in (or not in) a set of constants.",
+      "examples": [
+        "this.number_of_rooms in [2, 3]",
+        "this.object_zip not in [8004, 8011]",
+        "this.object_city in ['Zurich', 'Winterthur', 'Dietikon']"
+      ]
+    },
+    {
+      "name": "date_compare",
+      "syntax": "this.<col> >= '<YYYY-MM-DD>'  |  this.<col> <= '<YYYY-MM-DD>'",
+      "applicable_types": ["values"],
+      "description": "Compare a date column to a fixed ISO date. Use for 'available from' style constraints on non-predefined keys.",
+      "examples": [
+        "this.available_from >= '2026-09-01'"
+      ]
+    },
+    {
+      "name": "distance",
+      "syntax": "distance(this.geo_lat, this.geo_lng, <target_lat>, <target_lon>) <op> <km>",
+      "applicable_types": ["computed"],
+      "description": "Computes straight-line distance in kilometres between the property coordinates and a fixed target location. The LLM must resolve the target's latitude and longitude from its knowledge and inline exact float values. Use for user requests like 'near ETH', 'close to EPFL', 'within 3 km of Zurich HB', etc.",
+      "landmark_examples": {
+        "ETH Zurich (Zentrum)": [47.3769, 8.5476],
+        "ETH Zurich (Hönggerberg)": [47.4068, 8.5076],
+        "EPFL Lausanne": [46.5191, 6.5668],
+        "University of Zurich": [47.3744, 8.5510],
+        "University of Bern": [46.9509, 7.4380],
+        "Zurich HB (main station)": [47.3782, 8.5403],
+        "Geneva main station (Cornavin)": [46.2101, 6.1424],
+        "Bern main station": [46.9490, 7.4390],
+        "Basel SBB station": [47.5474, 7.5896],
+        "Lausanne main station": [46.5166, 6.6295]
+      },
+      "examples": [
+        "distance(this.geo_lat, this.geo_lng, 47.3769, 8.5476) <= 5",
+        "distance(this.geo_lat, this.geo_lng, 46.5191, 6.5668) <= 3",
+        "distance(this.geo_lat, this.geo_lng, 47.3782, 8.5403) <= 2"
+      ]
+    },
+    {
+      "name": "distance_column",
+      "syntax": "this.<distance_col> <= <meters>",
+      "applicable_types": ["values"],
+      "description": "For predefined distance columns (distance_public_transport, distance_shop, distance_kindergarten, distance_school_1, distance_school_2): compare to a threshold in metres. Prefer this over the distance() function when a matching column exists.",
+      "examples": [
+        "this.distance_public_transport <= 300",
+        "this.distance_shop <= 500",
+        "this.distance_school_1 <= 800"
+      ]
+    }
+  ],
+  "notes": [
+    "All expressions operate on a single property row referred to as 'this'. Access column values via this.column_name.",
+    "The result of evaluating a clear expression against a row is boolean (true/false).",
+    "For distance to named places (ETH, EPFL, landmarks): use the distance() tool with inlined lat/lon from the landmark_examples table above or from your knowledge.",
+    "For distance to generic amenities with a predefined column (shop, school, transport): use distance_column with this.distance_* and a metre threshold.",
+    "Constraints with no resolvable column+expression (subjective vibes, unknown landmarks) must be tagged clarity='vague' and must NOT have an 'expression' field."
+  ]
+}

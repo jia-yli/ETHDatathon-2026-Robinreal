@@ -1,0 +1,667 @@
+[
+  {
+    "name": "price",
+    "type": "values",
+    "description": "Monthly CHF for rent; total CHF for sale. Use numeric comparison."
+  },
+  {
+    "name": "area",
+    "type": "values",
+    "description": "Living area in square metres (m²)."
+  },
+  {
+    "name": "number_of_rooms",
+    "type": "values",
+    "description": "Swiss room count (e.g. 3.5). Studio=1, 1-bedroom≈2.5. Accepts decimals."
+  },
+  {
+    "name": "floor",
+    "type": "values",
+    "description": "Floor number. 0=ground floor. Use integer or 'top' for top floor."
+  },
+  {
+    "name": "year_built",
+    "type": "values",
+    "description": "Year the building was constructed."
+  },
+  {
+    "name": "offer_type",
+    "type": "keywords",
+    "description": "Listing type. Values: 'rent' (Miete/louer) or 'sale' (Kauf/acheter)."
+  },
+  {
+    "name": "maybe_temporary",
+    "type": "boolean",
+    "description": "True if tenancy may be temporary/fixed-term."
+  },
+  {
+    "name": "object_street",
+    "type": "keywords",
+    "description": "Street address of the property."
+  },
+  {
+    "name": "object_zip",
+    "type": "keywords",
+    "description": "Swiss postal code (integer, e.g. 8001). Use set expressions for multiple codes."
+  },
+  {
+    "name": "object_city",
+    "type": "keywords",
+    "description": "City name in standard English. Correct typos and translate: Zürich/Zuirch→Zurich, Genf/Genève→Geneva, Luzern→Lucerne, Berne→Bern, Basel/Bâle→Basel, Lausanne→Lausanne, Lugano→Lugano, St. Gallen→St. Gallen, Winterthur/Wntertur→Winterthur."
+  },
+  {
+    "name": "object_state",
+    "type": "keywords",
+    "description": "Swiss canton as 2-letter uppercase code. ZH=Zurich, BE=Bern, LU=Lucerne, UR=Uri, SZ=Schwyz, OW=Obwalden, NW=Nidwalden, GL=Glarus, ZG=Zug, FR=Fribourg, SO=Solothurn, BS=Basel-Stadt, BL=Basel-Landschaft, SH=Schaffhausen, AR=Appenzell Ausserrhoden, AI=Appenzell Innerrhoden, SG=St. Gallen, GR=Graubünden/Grisons, AG=Aargau, TG=Thurgau, TI=Ticino, VD=Vaud, VS=Valais/Wallis, NE=Neuchâtel, GE=Geneva/Genf, JU=Jura."
+  },
+  {
+    "name": "geo_lat",
+    "type": "values",
+    "description": "GPS latitude of the property."
+  },
+  {
+    "name": "geo_lng",
+    "type": "values",
+    "description": "GPS longitude of the property."
+  },
+  {
+    "name": "object_type",
+    "type": "keywords",
+    "description": "Property type. Values: 'apartment' (flat/Wohnung/appartement) or 'house' (Haus/maison)."
+  },
+  {
+    "name": "is_new_building",
+    "type": "boolean",
+    "description": "True if newly constructed building."
+  },
+  {
+    "name": "prop_fireplace",
+    "type": "boolean",
+    "description": "True if the property has a fireplace."
+  },
+  {
+    "name": "prop_balcony",
+    "type": "boolean",
+    "description": "True if the property has a balcony."
+  },
+  {
+    "name": "prop_elevator",
+    "type": "boolean",
+    "description": "True if the building has an elevator/lift."
+  },
+  {
+    "name": "prop_parking",
+    "type": "boolean",
+    "description": "True if parking space is included or available."
+  },
+  {
+    "name": "prop_garage",
+    "type": "boolean",
+    "description": "True if a garage is included or available."
+  },
+  {
+    "name": "distance_public_transport",
+    "type": "values",
+    "description": "Walking distance in metres to nearest public transport stop."
+  },
+  {
+    "name": "distance_shop",
+    "type": "values",
+    "description": "Walking distance in metres to nearest shop/supermarket."
+  },
+  {
+    "name": "distance_kindergarten",
+    "type": "values",
+    "description": "Walking distance in metres to nearest kindergarten."
+  },
+  {
+    "name": "distance_school_1",
+    "type": "values",
+    "description": "Walking distance in metres to nearest primary/secondary school."
+  },
+  {
+    "name": "distance_school_2",
+    "type": "values",
+    "description": "Walking distance in metres to nearest alternative school."
+  },
+  {
+    "name": "animal_allowed",
+    "type": "boolean",
+    "description": "True if pets are permitted (Haustiere erlaubt / animaux acceptés)."
+  },
+  {
+    "name": "prop_child_friendly",
+    "type": "boolean",
+    "description": "True if the property or building is child-friendly."
+  },
+  {
+    "name": "availability_immediate",
+    "type": "boolean",
+    "description": "True if the property is available immediately."
+  },
+  {
+    "name": "availability_flexible",
+    "type": "boolean",
+    "description": "True if the move-in date is flexible."
+  },
+  {
+    "name": "price_includes_utilities",
+    "type": "boolean",
+    "description": "True if utilities (Nebenkosten/charges) are included in the price."
+  },
+  {
+    "name": "deposit_required",
+    "type": "boolean",
+    "description": "True if a deposit/security payment is required."
+  },
+  {
+    "name": "first_time_occupancy",
+    "type": "boolean",
+    "description": "True if this is a first-time occupancy (Erstbezug)."
+  },
+  {
+    "name": "sublease_allowed",
+    "type": "boolean",
+    "description": "True if subletting/subleasing is permitted."
+  },
+  {
+    "name": "commercial_allowed",
+    "type": "boolean",
+    "description": "True if commercial use is permitted."
+  },
+  {
+    "name": "is_house",
+    "type": "boolean",
+    "description": "True if the property is a standalone house or villa."
+  },
+  {
+    "name": "is_maisonette_duplex",
+    "type": "boolean",
+    "description": "True if the property is a maisonette or duplex."
+  },
+  {
+    "name": "is_attic_flat",
+    "type": "boolean",
+    "description": "True if the property is an attic flat (Dachwohnung)."
+  },
+  {
+    "name": "is_ground_floor",
+    "type": "boolean",
+    "description": "True if the property is on the ground floor (Erdgeschoss). Also set floor=0."
+  },
+  {
+    "name": "is_penthouse",
+    "type": "boolean",
+    "description": "True if the property is a penthouse."
+  },
+  {
+    "name": "has_high_ceilings",
+    "type": "boolean",
+    "description": "True if the property has notably high ceilings."
+  },
+  {
+    "name": "has_gallery_loft",
+    "type": "boolean",
+    "description": "True if the property has a gallery or loft layout."
+  },
+  {
+    "name": "layout_open_plan",
+    "type": "boolean",
+    "description": "True if the property has an open-plan layout."
+  },
+  {
+    "name": "layout_separated_rooms",
+    "type": "boolean",
+    "description": "True if the property has clearly separated rooms."
+  },
+  {
+    "name": "has_smart_home",
+    "type": "boolean",
+    "description": "True if the property has smart home features."
+  },
+  {
+    "name": "is_wheelchair_accessible",
+    "type": "boolean",
+    "description": "True if the property is wheelchair accessible (barrierefrei)."
+  },
+  {
+    "name": "has_large_windows",
+    "type": "boolean",
+    "description": "True if the property has large windows."
+  },
+  {
+    "name": "is_furnished",
+    "type": "boolean",
+    "description": "True if the property is furnished (möbliert/meublé)."
+  },
+  {
+    "name": "is_unfurnished",
+    "type": "boolean",
+    "description": "True if the property is explicitly unfurnished."
+  },
+  {
+    "name": "has_modern_kitchen",
+    "type": "boolean",
+    "description": "True if the property has a modern kitchen."
+  },
+  {
+    "name": "has_open_kitchen",
+    "type": "boolean",
+    "description": "True if the kitchen is open to the living area."
+  },
+  {
+    "name": "has_dishwasher",
+    "type": "boolean",
+    "description": "True if a dishwasher is included."
+  },
+  {
+    "name": "has_multiple_bathrooms",
+    "type": "boolean",
+    "description": "True if there are two or more bathrooms."
+  },
+  {
+    "name": "has_bathtub",
+    "type": "boolean",
+    "description": "True if the property has a bathtub."
+  },
+  {
+    "name": "has_walk_in_shower",
+    "type": "boolean",
+    "description": "True if the property has a walk-in shower."
+  },
+  {
+    "name": "has_guest_toilet",
+    "type": "boolean",
+    "description": "True if there is a separate guest toilet."
+  },
+  {
+    "name": "has_washing_machine_in_unit",
+    "type": "boolean",
+    "description": "True if a washing machine is inside the unit."
+  },
+  {
+    "name": "has_tumbler_in_unit",
+    "type": "boolean",
+    "description": "True if a tumble dryer is inside the unit."
+  },
+  {
+    "name": "has_floor_heating",
+    "type": "boolean",
+    "description": "True if the property has underfloor heating."
+  },
+  {
+    "name": "has_air_conditioning",
+    "type": "boolean",
+    "description": "True if the property has air conditioning."
+  },
+  {
+    "name": "floors_wood_parquet",
+    "type": "boolean",
+    "description": "True if the flooring is wood/parquet."
+  },
+  {
+    "name": "floors_tile",
+    "type": "boolean",
+    "description": "True if the flooring is tile."
+  },
+  {
+    "name": "floors_laminate",
+    "type": "boolean",
+    "description": "True if the flooring is laminate."
+  },
+  {
+    "name": "has_built_in_wardrobes",
+    "type": "boolean",
+    "description": "True if the property has built-in wardrobes/closets."
+  },
+  {
+    "name": "has_walk_in_closet",
+    "type": "boolean",
+    "description": "True if the property has a walk-in closet."
+  },
+  {
+    "name": "has_cellar_storage",
+    "type": "boolean",
+    "description": "True if the property includes a cellar or storage room."
+  },
+  {
+    "name": "has_attic_storage",
+    "type": "boolean",
+    "description": "True if the property includes attic storage."
+  },
+  {
+    "name": "has_basement_hobby_room",
+    "type": "boolean",
+    "description": "True if there is a basement hobby/recreation room."
+  },
+  {
+    "name": "has_terrace",
+    "type": "boolean",
+    "description": "True if the property has a terrace."
+  },
+  {
+    "name": "has_loggia",
+    "type": "boolean",
+    "description": "True if the property has a loggia."
+  },
+  {
+    "name": "prop_garden_private",
+    "type": "boolean",
+    "description": "True if the property has a private garden."
+  },
+  {
+    "name": "prop_garden_shared",
+    "type": "boolean",
+    "description": "True if the property has access to a shared garden."
+  },
+  {
+    "name": "prop_wintergarden",
+    "type": "boolean",
+    "description": "True if the property has a winter garden / conservatory."
+  },
+  {
+    "name": "has_bicycle_room",
+    "type": "boolean",
+    "description": "True if the building has a bicycle storage room."
+  },
+  {
+    "name": "shares_washing_room",
+    "type": "boolean",
+    "description": "True if a communal laundry room is shared with other tenants."
+  },
+  {
+    "name": "has_playground",
+    "type": "boolean",
+    "description": "True if the property or building has a playground."
+  },
+  {
+    "name": "has_swimming_pool",
+    "type": "boolean",
+    "description": "True if the property has a swimming pool."
+  },
+  {
+    "name": "has_sauna",
+    "type": "boolean",
+    "description": "True if the property has a sauna."
+  },
+  {
+    "name": "is_minergie_certified",
+    "type": "boolean",
+    "description": "True if the building has Minergie energy-efficiency certification."
+  },
+  {
+    "name": "has_solar_panels",
+    "type": "boolean",
+    "description": "True if the building has solar panels."
+  },
+  {
+    "name": "has_heat_pump",
+    "type": "boolean",
+    "description": "True if the building uses a heat pump for heating."
+  },
+  {
+    "name": "has_fiber_internet",
+    "type": "boolean",
+    "description": "True if the property has fiber optic internet."
+  },
+  {
+    "name": "view_lake",
+    "type": "boolean",
+    "description": "True if the property has a lake view (Seeblick / vue sur le lac)."
+  },
+  {
+    "name": "view_mountains",
+    "type": "boolean",
+    "description": "True if the property has a mountain view."
+  },
+  {
+    "name": "view_city",
+    "type": "boolean",
+    "description": "True if the property has a city/urban view."
+  },
+  {
+    "name": "view_nature",
+    "type": "boolean",
+    "description": "True if the property has a nature/green view."
+  },
+  {
+    "name": "orientation_south_facing",
+    "type": "boolean",
+    "description": "True if the property is south-facing (sunny / sonnig)."
+  },
+  {
+    "name": "vibe_breathtaking_view",
+    "type": "boolean",
+    "description": "True if the listing highlights a breathtaking view."
+  },
+  {
+    "name": "condition_newly_renovated",
+    "type": "boolean",
+    "description": "True if the property was recently renovated (frisch renoviert / rénové)."
+  },
+  {
+    "name": "condition_needs_renovation",
+    "type": "boolean",
+    "description": "True if the property needs renovation or is sold as-is."
+  },
+  {
+    "name": "condition_well_maintained",
+    "type": "boolean",
+    "description": "True if the property is described as well-maintained."
+  },
+  {
+    "name": "vibe_bright_light",
+    "type": "boolean",
+    "description": "True if the property is described as bright/light-filled (hell / lumineux). VAGUE — no direct column value."
+  },
+  {
+    "name": "vibe_sunny",
+    "type": "boolean",
+    "description": "True if the listing emphasises sunny rooms or orientation. VAGUE — no direct column value."
+  },
+  {
+    "name": "vibe_quiet_peaceful",
+    "type": "boolean",
+    "description": "True if the listing emphasises quiet surroundings (ruhig / calme). VAGUE — no direct column value."
+  },
+  {
+    "name": "vibe_modern",
+    "type": "boolean",
+    "description": "True if the listing emphasises a modern feel. VAGUE — no direct column value."
+  },
+  {
+    "name": "vibe_historic_charming",
+    "type": "boolean",
+    "description": "True if the listing emphasises historic/charming character. VAGUE — no direct column value."
+  },
+  {
+    "name": "style_industrial_loft",
+    "type": "boolean",
+    "description": "True if the property has an industrial loft style. VAGUE — no direct column value."
+  },
+  {
+    "name": "vibe_luxury_premium",
+    "type": "boolean",
+    "description": "True if the listing emphasises luxury or premium quality. VAGUE — no direct column value."
+  },
+  {
+    "name": "vibe_extravagant",
+    "type": "boolean",
+    "description": "True if the listing uses extravagant/high-end language. VAGUE — no direct column value."
+  },
+  {
+    "name": "vibe_cozy",
+    "type": "boolean",
+    "description": "True if the listing describes a cozy feel (gemütlich / cosy). VAGUE — no direct column value."
+  },
+  {
+    "name": "vibe_spacious",
+    "type": "boolean",
+    "description": "True if the listing emphasises spaciousness. VAGUE — no direct column value."
+  },
+  {
+    "name": "vibe_compact",
+    "type": "boolean",
+    "description": "True if the listing describes the property as compact. VAGUE — no direct column value."
+  },
+  {
+    "name": "vibe_family_friendly",
+    "type": "boolean",
+    "description": "True if the listing is described as family-friendly. VAGUE — no direct column value."
+  },
+  {
+    "name": "vibe_student_budget",
+    "type": "boolean",
+    "description": "True if the listing is described as suitable for students on a budget. VAGUE — no direct column value."
+  },
+  {
+    "name": "vibe_charming_neighborhood",
+    "type": "boolean",
+    "description": "True if the neighbourhood is described as charming. VAGUE — no direct column value."
+  },
+  {
+    "name": "location_urban_city_center",
+    "type": "boolean",
+    "description": "True if the property is in the city centre."
+  },
+  {
+    "name": "location_suburban",
+    "type": "boolean",
+    "description": "True if the property is in a suburban area."
+  },
+  {
+    "name": "location_rural",
+    "type": "boolean",
+    "description": "True if the property is in a rural area."
+  },
+  {
+    "name": "surroundings_parks",
+    "type": "boolean",
+    "description": "True if the listing mentions proximity to parks."
+  },
+  {
+    "name": "surroundings_water",
+    "type": "boolean",
+    "description": "True if the listing mentions proximity to a lake, river, or water. (Proximity, not view — use view_lake for lake views.)"
+  },
+  {
+    "name": "surroundings_forest",
+    "type": "boolean",
+    "description": "True if the listing mentions proximity to a forest."
+  },
+  {
+    "name": "commute_excellent",
+    "type": "boolean",
+    "description": "True if the listing describes excellent commute or public transport access. Use for: 'good public transport', 'short commute', 'near my work', 'nah an der Arbeit'."
+  },
+  {
+    "name": "car_dependent",
+    "type": "boolean",
+    "description": "True if the location requires a car for daily errands."
+  },
+  {
+    "name": "bike_friendly",
+    "type": "boolean",
+    "description": "True if the area is described as bike-friendly."
+  },
+  {
+    "name": "pedestrian_friendly",
+    "type": "boolean",
+    "description": "True if the area is described as pedestrian-friendly."
+  },
+  {
+    "name": "close_to_train_station",
+    "type": "boolean",
+    "description": "True if the property is described as close to a train station (Bahnhof / gare)."
+  },
+  {
+    "name": "close_to_bus_tram",
+    "type": "boolean",
+    "description": "True if the property is close to a bus or tram stop."
+  },
+  {
+    "name": "close_to_highway",
+    "type": "boolean",
+    "description": "True if the property is close to a highway/motorway."
+  },
+  {
+    "name": "close_to_airport",
+    "type": "boolean",
+    "description": "True if the property is close to an airport."
+  },
+  {
+    "name": "close_to_supermarket",
+    "type": "boolean",
+    "description": "True if the property is described as close to a supermarket. Use distance_shop for metre-based filtering."
+  },
+  {
+    "name": "close_to_shopping_mall",
+    "type": "boolean",
+    "description": "True if the property is close to a shopping mall."
+  },
+  {
+    "name": "close_to_bakery_cafe",
+    "type": "boolean",
+    "description": "True if the property is close to a bakery or café."
+  },
+  {
+    "name": "close_to_restaurants",
+    "type": "boolean",
+    "description": "True if the property is close to restaurants."
+  },
+  {
+    "name": "close_to_fitness",
+    "type": "boolean",
+    "description": "True if the property is close to a gym or fitness centre."
+  },
+  {
+    "name": "close_to_hospital",
+    "type": "boolean",
+    "description": "True if the property is close to a hospital or clinic."
+  },
+  {
+    "name": "close_to_kindergarten",
+    "type": "boolean",
+    "description": "True if the property is close to a kindergarten. Use distance_kindergarten for metre-based filtering."
+  },
+  {
+    "name": "close_to_schools",
+    "type": "boolean",
+    "description": "True if the property is close to schools. Use distance_school_1 / distance_school_2 for metre-based filtering."
+  },
+  {
+    "name": "close_to_university",
+    "type": "boolean",
+    "description": "True if the property is close to a university."
+  },
+  {
+    "name": "smokers_allowed",
+    "type": "boolean",
+    "description": "True if smoking is permitted in the property."
+  },
+  {
+    "name": "musicians_welcome",
+    "type": "boolean",
+    "description": "True if musicians or instrument practice is welcome."
+  },
+  {
+    "name": "suitability_singles",
+    "type": "boolean",
+    "description": "True if the property is described as suitable for singles."
+  },
+  {
+    "name": "suitability_couples",
+    "type": "boolean",
+    "description": "True if the property is described as suitable for couples."
+  },
+  {
+    "name": "suitability_students",
+    "type": "boolean",
+    "description": "True if the property is described as suitable for students."
+  },
+  {
+    "name": "suitability_expats",
+    "type": "boolean",
+    "description": "True if the property is described as suitable for expats."
+  }
+]
