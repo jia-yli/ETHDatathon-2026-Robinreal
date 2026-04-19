@@ -94,9 +94,9 @@ def test_with_query() -> None:
 
     # query = "Ich suche etwas Kleineres in Lausanne, möglichst in der Nähe von EPFL, gern möbliert, unter 2100 CHF, mit guter Anbindung, und am besten in einer Ecke, die sich sicher, entspannt und nicht komplett anonym anfühlt."
 
-    query = "3-room bright apartment in Zurich under 2800 CHF with balcony, close to public transport"
+    # query = "3-room bright apartment in Zurich under 2800 CHF with balcony, close to public transport"
 
-    # query = "Bright family-friendly flat in Winterthur, not too expensive, ideally with parking"
+    query = "Bright family-friendly flat in Winterthur, not too expensive, ideally with parking"
 
     # query = "Modern apartment in Basel, cheap but central, quiet with nice views"
 
@@ -124,12 +124,13 @@ def test_with_query() -> None:
         candidates = filter_future.result()
 
     query_constraints = [c.model_dump() for c in parsed.constraints]
-    query_hard_constraints, query_soft_constraints = process_constraints(query_constraints, query)
+    query_hard_constraints, query_soft_constraints, query_vague_soft_constraints = process_constraints(query_constraints, query)
 
     print(f"\n=== PARSED QUERY ===")
     print(f"Query: {query}")
     print(f"Hard constraints: {len(query_hard_constraints['constraint_list'])}")
     print(f"Soft constraints: {len(query_soft_constraints['constraint_list'])}")
+    print(f"Vague soft constraints: {len(query_vague_soft_constraints['constraint_list'])}")
 
     limit = 25
     offset = 0
@@ -139,7 +140,7 @@ def test_with_query() -> None:
     candidates = candidates[offset: min(offset + limit, len(candidates))]
     candidates = filter_soft_facts(candidates, query_soft_constraints)
 
-    ranked_results = rank_listings(candidates, query_soft_constraints)
+    ranked_results = rank_listings(candidates, query_soft_constraints, query_vague_soft_constraints)
     # assert len(ranked_results) > 0, "Ranked results should not be empty"
 
     ranked_results_data = [_model_to_dict(result) for result in ranked_results]
@@ -163,7 +164,7 @@ def test_with_query() -> None:
     print(f"Query: {query}")
     print(f"Hard constraints used: {len(query_hard_constraints['constraint_list'])}")
     print(f"Soft constraints used: {len(query_soft_constraints['constraint_list'])}")
-
+    print(f"Vague soft constraints used: {len(query_vague_soft_constraints['constraint_list'])}")
 
 def test_non_residential_query() -> None:
     """
@@ -210,7 +211,7 @@ def test_non_residential_query() -> None:
             candidates = filter_future.result()
 
         query_constraints = [c.model_dump() for c in parsed.constraints]
-        query_hard_constraints, query_soft_constraints = process_constraints(query_constraints, query)
+        query_hard_constraints, query_soft_constraints, query_vague_soft_constraints = process_constraints(query_constraints, query)
 
         before_filter = len(candidates)
         candidates = filter_hard_facts_via_exec(candidates, query_hard_constraints, query)
@@ -225,7 +226,7 @@ def test_non_residential_query() -> None:
         soft_facts = extract_soft_facts(query)
         soft_facts_dict = query_soft_constraints
         candidates_slice = filter_soft_facts(candidates_slice, soft_facts_dict)
-        ranked = rank_listings(candidates_slice, soft_facts_dict)
+        ranked = rank_listings(candidates_slice, soft_facts_dict, query_vague_soft_constraints)
 
         print(f"Top results ({len(ranked)} ranked):")
         for i, r in enumerate(ranked[:5], 1):
