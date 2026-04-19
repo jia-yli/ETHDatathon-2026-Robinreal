@@ -4,7 +4,7 @@ uv sync --dev
 uv run python scripts/install_cloudflared.py
 
 export DASHSCOPE_API_KEY=<YOUR_QWEN_API_KEY>
-export DEEPSEEK_API_KEY=<YOUR_QWEN_API_KEY>
+export DEEPSEEK_API_KEY=<YOUR_DEEPSEEK_API_KEY>
 
 # serving and test
 #uv run uvicorn app.main:app --reload
@@ -25,5 +25,7 @@ curl -X POST http://localhost:8000/listings \
   }'
 
 # [for dev] test the pipeline (but please have 'data/listings.db' first)
+export DEEPSEEK_API_KEY=<YOUR_DEEPSEEK_API_KEY>
 uv run pytest tests/test_ranking.py::test_with_query -q -s
+uv run pytest tests/test_ranking.py::test_non_residential_query -q -s
 ```

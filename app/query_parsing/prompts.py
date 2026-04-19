@@ -123,6 +123,20 @@ Key selection guidance:
                            → commute_excellent
   • "close to workplace" / "near my work" / "short commute" / "nah an der Arbeit"
                            → commute_excellent (use predefined, NOT a custom key)
+  • Named institution as commute destination — ALWAYS emit TWO constraints:
+      (1) object_city (hard): the city the institution is located in
+      (2) distance/commute (soft, predefined or custom key) for the proximity
+      Institution → city mapping:
+        ETH / ETH Zurich / ETHZ    → "Zurich"
+        EPFL / EPFL Lausanne       → "Lausanne"
+        Universität Basel / Uni Basel / UniBasel → "Basel"
+        Universität Bern / Uni Bern → "Bern"
+        UNIGE / Universität Genf / Uni Geneva → "Geneva"
+        UNIL / Universität Lausanne / HEC Lausanne → "Lausanne"
+        USI / Università della Svizzera italiana → "Lugano"
+      Example: "max 30 min to ETH Zurich" →
+        {{"key": "object_city",     "constraint_type": "hard",  "expression": "this == 'Zurich'"}}
+        {{"key": "distance_to_eth", "constraint_type": "soft",  "expression": "this <= 30min public transport"}}
   • "great views" / "nice views" / "views" / "Aussicht"
                            → view_nature (or view_lake / view_mountains / view_city
                              when specific view type is mentioned)
@@ -134,6 +148,25 @@ Key selection guidance:
   • "newly renovated"      → condition_newly_renovated
   • "needs renovation"     → condition_needs_renovation
   • "new building"         → is_new_building
+
+Non-residential property types — when the user is looking for a non-residential listing,
+ALWAYS emit an object_category (hard) constraint with one of these exact values:
+  • parking space / place de parking / Parkplatz / outdoor parking
+                           → object_category (hard): "this == 'Parkplatz'"
+  • underground parking / Tiefgarage / parking souterrain / covered parking
+                           → object_category (hard): "this == 'Tiefgarage'"
+  • garage / box / individual garage
+                           → object_category (hard): "this == 'Einzelgarage'"
+  • office / bureau / Büro / commercial space / surface commerciale
+                           → object_category (hard): "this == 'Gewerbeobjekt'"
+  • storage / depot / dépôt / Lager / warehouse / entrepôt
+                           → object_category (hard): "this == 'Gewerbeobjekt'"
+  • workshop / Werkstatt
+                           → object_category (hard): "this == 'Gewerbeobjekt'"
+
+  When the user asks for "garage OR parking" / "parking ou garage", use the more
+  general underground option or emit two soft constraints instead of one hard — prefer
+  object_category (soft): "this in ['Tiefgarage', 'Einzelgarage', 'Parkplatz']"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STEP 4 — STANDARDISED EXPRESSION
@@ -223,11 +256,11 @@ Query: "Ich suche eine ruhige Wohnung in Zürich, idealerweise mit Balkon, max. 
 Query: "Near ETH Zurich, 2 rooms, max CHF 1800, close to supermarket on foot"
 {{
   "constraints": [
+    {{"source_phrase": "Near ETH Zurich", "key": "object_city",     "predefined": true,  "constraint_type": "hard", "expression": "this == 'Zurich'"}},
     {{"source_phrase": "Near ETH Zurich", "key": "distance_to_eth", "predefined": false, "constraint_type": "soft", "expression": "isclose(this, 15min public transport)"}},
     {{"source_phrase": "2 rooms",         "key": "number_of_rooms", "predefined": true,  "constraint_type": "hard", "expression": "this == 2"}},
     {{"source_phrase": "max CHF 1800",    "key": "price",           "predefined": true,  "constraint_type": "hard", "expression": "this <= 1800"}},
     {{"source_phrase": "close to supermarket on foot", "key": "distance_shop", "predefined": true, "constraint_type": "soft", "expression": "isclose(this, 5min by foot)"}}
-
   ]
 }}
 
@@ -239,6 +272,27 @@ Query: "2 or 3 room flat in postal code 8001 or 8002, not 8004, under CHF 2000"
     {{"source_phrase": "postal code 8001 or 8002", "key": "object_zip", "predefined": true, "constraint_type": "hard", "expression": "this in [8001, 8002]"}},
     {{"source_phrase": "not 8004",        "key": "object_zip",      "predefined": true,  "constraint_type": "hard", "expression": "this != 8004"}},
     {{"source_phrase": "under CHF 2000",  "key": "price",           "predefined": true,  "constraint_type": "hard", "expression": "this <= 2000"}}
+  ]
+}}
+
+Query: "Je cherche une place de parking ou un garage à louer à Lausanne, idéalement couvert, disponible de suite."
+(French: "I'm looking for a parking space or garage to rent in Lausanne, ideally covered, available immediately.")
+{{
+  "constraints": [
+    {{"source_phrase": "place de parking ou un garage", "key": "object_category", "predefined": true,  "constraint_type": "soft", "expression": "this in ['Tiefgarage', 'Einzelgarage', 'Parkplatz']"}},
+    {{"source_phrase": "à Lausanne",      "key": "object_city",     "predefined": true,  "constraint_type": "hard", "expression": "this == 'Lausanne'"}},
+    {{"source_phrase": "idéalement couvert", "key": "object_category", "predefined": true, "constraint_type": "soft", "expression": "this == 'Tiefgarage'"}},
+    {{"source_phrase": "disponible de suite", "key": "availability_immediate", "predefined": true, "constraint_type": "hard", "expression": "this == true"}}
+  ]
+}}
+
+Query: "Looking for a small office to rent in central Lausanne, around 50-100 sqm, good public transport access."
+{{
+  "constraints": [
+    {{"source_phrase": "office",          "key": "object_category", "predefined": true,  "constraint_type": "hard", "expression": "this == 'Gewerbeobjekt'"}},
+    {{"source_phrase": "central Lausanne","key": "object_city",     "predefined": true,  "constraint_type": "hard", "expression": "this == 'Lausanne'"}},
+    {{"source_phrase": "50-100 sqm",      "key": "area",            "predefined": true,  "constraint_type": "soft", "expression": "50 <= this <= 100"}},
+    {{"source_phrase": "good public transport access", "key": "commute_excellent", "predefined": true, "constraint_type": "soft", "expression": "this == true"}}
   ]
 }}
 """
