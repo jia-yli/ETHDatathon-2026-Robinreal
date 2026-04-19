@@ -1,5 +1,4 @@
 import os
-from http import HTTPStatus
 
 import dashscope
 import numpy as np
